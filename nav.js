@@ -11,19 +11,24 @@ const KEY='geiday.role';
 const ROLES={student:'藝大生',juken:'受験生',guest:'学外の人'};
 const NAME={find:'さがす',tt:'時間割',map:'校内地図',tea:'教員',art:'アーティスト',rs:'予約',ex:'展示・講評',
   kb:'公募',gv:'譲り合い',ry:'留学',sk:'就活',ar:'記事',jk:'受験生へ',acc:'アカウント',home:'ホーム'};
-const TABS=[{id:'home',l:'ホーム'},{id:'art',l:'つながる'},{id:'ar',l:'知る'},{id:'ex',l:'ニュース'}];
+const TABS=[{id:'home',l:'ホーム'},{id:'art',l:'つながる'},{id:'know',l:'知る'},{id:'news',l:'ニュース'}];
 const UNDER={home:'home',tt:'home',find:'home',map:'home',tea:'home',rs:'home',acc:'home',
-  art:'art', ar:'ar',ry:'ar',sk:'ar',jk:'ar', ex:'ex',kb:'ex',gv:'ex'};
-const NEWS=['ex','kb','gv'], KNOW=['ry','sk','jk'];
+  art:'art', ex:'know',kb:'know',gv:'know',ry:'know',sk:'know',jk:'know', ar:'news'};
+const KNOW=['ex','kb','gv','ry','sk'];   /* 「知る」のチップ */
+const ENTRY={home:'home',art:'art',know:null,news:'ar'};
 const I={
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11.5 12 4l8.5 7.5"/><path d="M6 10v9.5h12V10"/><path d="M10 19.5v-5h4v5"/></svg>',
   art:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c.8-3 2.9-4.6 5.5-4.6s4.7 1.6 5.5 4.6"/><circle cx="16.5" cy="9.5" r="2.4"/><path d="M15.5 14.2c2.6 0 4.3 1.5 5 4.3"/></svg>',
+  know:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5c-1.6-1.3-3.8-1.8-7.5-1.8v13c3.7 0 5.9.5 7.5 1.8 1.6-1.3 3.8-1.8 7.5-1.8v-13c-3.7 0-5.9.5-7.5 1.8z"/><path d="M12 6.5v13"/></svg>',
+  news:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M7 9h4.5M7 12.5h10M7 16h10M14 9h3"/></svg>',
+  amc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 9.5 12 4l8.5 5.5H3.5z"/><path d="M5.5 9.5v7M10 9.5v7M14 9.5v7M18.5 9.5v7M3.5 19.5h17"/></svg>',
+  kobo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5l-9 9-3.5-3.5 9-9z"/><path d="M14.5 6.5 19.5 11.5"/></svg>',
   ar:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5c-1.6-1.3-3.8-1.8-7.5-1.8v13c3.7 0 5.9.5 7.5 1.8 1.6-1.3 3.8-1.8 7.5-1.8v-13c-3.7 0-5.9.5-7.5 1.8z"/><path d="M12 6.5v13"/></svg>',
   ex:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M7 9h4.5M7 12.5h10M7 16h10M14 9h3"/></svg>',
   find:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>',
-  tt:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><rect x="3.5" y="4.5" width="17" height="16" rx="3.5"/><path d="M3.5 10h17M9.5 10v10.5M15 10v10.5"/></svg>',
-  map:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s6.5-5.6 6.5-11a6.5 6.5 0 0 0-13 0c0 5.4 6.5 11 6.5 11z"/><circle cx="12" cy="10" r="2.4"/></svg>',
-  tea:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8.5" r="4"/><path d="M4.5 20.5c1.2-4 4-6 7.5-6s6.3 2 7.5 6"/></svg>',
+  tt:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"><rect x="3.5" y="5" width="17" height="15.5" rx="3.5"/><path d="M3.5 9.5h17M8 3v3.5M16 3v3.5"/><circle cx="8.3" cy="13.3" r=".9" fill="currentColor" stroke="none"/><circle cx="12" cy="13.3" r=".9" fill="currentColor" stroke="none"/><circle cx="15.7" cy="13.3" r=".9" fill="currentColor" stroke="none"/><circle cx="8.3" cy="17" r=".9" fill="currentColor" stroke="none"/><circle cx="12" cy="17" r=".9" fill="currentColor" stroke="none"/></svg>',
+  map:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5v11l5.5-2.5 6 2.5 5.5-2.5v-11L15 8.5"/><path d="M9 6.5v10.5M15 8.5v10.5"/><path d="M12 2.5a3 3 0 0 0-3 3c0 2.3 3 5.5 3 5.5s3-3.2 3-5.5a3 3 0 0 0-3-3z"/></svg>',
+  tea:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3"/><circle cx="5.5" cy="10" r="2.2"/><circle cx="18.5" cy="10" r="2.2"/><path d="M7.5 19c.6-3 2.3-4.5 4.5-4.5s3.9 1.5 4.5 4.5M2.5 17.5c.4-2 1.6-3.2 3-3.2M21.5 17.5c-.4-2-1.6-3.2-3-3.2"/></svg>',
   rs:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>',
   kb:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11v2a2 2 0 0 0 2 2h1.5l3 5h2l-1.4-5H13l6 3V6l-6 3H6a2 2 0 0 0-2 2z"/></svg>',
   gv:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9h11l-3-3M20 15H9l3 3"/></svg>',
@@ -41,7 +46,7 @@ const I={
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 let role=null; try{ role=localStorage.getItem(KEY); }catch(e){}
 if(role && !ROLES[role]) role=null;
-let cur='find', newsKind='ex';
+let cur='find', knowKind='ex';
 
 /* ---------- DOM ---------- */
 const main=document.querySelector('main');
@@ -114,9 +119,9 @@ function sync(p){
       if(ic && ic.animate) ic.animate([{transform:'scale(1)'},{transform:'scale(1.22)'},{transform:'scale(1)'}],{duration:420,easing:'cubic-bezier(.32,1.6,.45,1)'}); }
     b.classList.toggle('on',on); });
   lensTo(i);
-  const u=UNDER[p]; const sub=(u==='home'&&p!=='home')||KNOW.includes(p);
+  const u=UNDER[p]; const sub=(u==='home'&&p!=='home')||p==='jk';
   back.classList.toggle('show',sub);
-  if(sub){ const to=u==='home'?'home':'ar'; back.innerHTML=I.back+'<span>'+(to==='home'?'ホーム':'知る')+'</span>'; back.onclick=()=>window.go(to); placeBack(); }
+  if(sub){ const to=u==='home'?'home':knowKind; back.innerHTML=I.back+'<span>'+(u==='home'?'ホーム':'知る')+'</span>'; back.onclick=()=>window.go(to); placeBack(); }
   paintChip();
 }
 function placeBack(){ const h=document.getElementById('lhead'); document.documentElement.style.setProperty('--gbtop',((h?h.offsetHeight:0)+10)+'px'); }
@@ -130,16 +135,16 @@ function endDrag(e){ if(!drag) return; lens.style.transition=''; lens.style.scal
   else{ let p=st.tab&&st.tab.dataset.p; if(!p){ const rc=bar.getBoundingClientRect(); p=TABS[Math.max(0,Math.min(TABS.length-1,Math.floor((e.clientX-rc.left-6)/W)))].id; } openTab(p); } }
 bar.addEventListener('pointerup',endDrag);
 bar.addEventListener('pointercancel',()=>{ lens.style.transition=''; lens.style.scale='1 1'; drag=null; lensTo(tabIndex(cur)); });
-function openTab(id){ if(id==='ex') id=newsKind; if(cur===id){ scrollTo({top:0,behavior:'smooth'}); return; } window.go(id); }
+function openTab(id){ if(id==='know') id=knowKind; else if(ENTRY[id]) id=ENTRY[id]; if(cur===id){ scrollTo({top:0,behavior:'smooth'}); return; } window.go(id); }
 
 /* ---------- go() を包む ---------- */
 function wrapGo(){
   if(typeof window.go!=='function' || window.go.__line) return false;
   const orig=window.go;
   const w=function(p){ const prev=cur;
-    if(p==='home') renderHome(); if(p==='jk') renderJuken(); if(NEWS.includes(p)) newsKind=p;
+    if(p==='home') renderHome(); if(p==='jk') renderJuken(); if(KNOW.includes(p)) knowKind=p;
     orig(p);
-    if(NEWS.includes(p)) mountSeg(p); if(p==='ar') mountKnow();
+    if(KNOW.includes(p)) mountKnow(p); if(p==='ar') mountNews();
     sync(p); if(p!==prev) scrollTo({top:0}); };
   w.__line=true; window.go=w; return true;
 }
@@ -147,27 +152,26 @@ function boot(){ wrapGo(); try{ pane='home'; }catch(e){} paintChip(); }
 if(!wrapGo()){ document.addEventListener('DOMContentLoaded',boot); } else boot();
 
 /* ---------- ホーム ---------- */
-function miniTT(){
+function ttCount(){
   let tt={}; try{ tt=JSON.parse(localStorage.getItem('geidai_tt_v1')||'{}')||{}; }catch(e){}
-  const days=['月','火','水','木','金']; const on=new Set();
-  Object.keys(tt).forEach(k=>{ const m=/^(前期|後期)\|(.)-(\d)$/.exec(k); if(m && days.includes(m[2])) on.add(days.indexOf(m[2])+'-'+m[3]); });
-  let h='<div class="ltt">'; for(let r=1;r<=5;r++) for(let d=0;d<5;d++) h+='<i'+(on.has(d+'-'+r)?' class="on"':'')+'></i>'; return h+'</div>';
+  return Object.keys(tt).length;
 }
-const MINIMAP='<svg viewBox="0 0 100 80" fill="none" stroke="#093FB4" stroke-width="2.2" stroke-linejoin="round"><path d="M4 42c20 0 40-10 62-8s24 6 30 14" stroke="#c9d3e8" stroke-width="2"/><path d="M8 24l20-8 6 14-20 8z"/><path d="M40 10l16-6 4 10-16 6z"/><path d="M58 30l20-4 6 20-20 4z"/><path d="M14 52l16-4 5 16-16 4z"/><path d="M46 46l14-3 3 12-14 3z"/><circle cx="82" cy="64" r="7" fill="#dce5f7" stroke="none"/></svg>';
 function homeCards(){
   const r=role||'student';
+  const n=ttCount(), nt=(typeof TEACHERS!=='undefined'&&TEACHERS.length)?TEACHERS.length+'人':'';
+  const sq=(p,title,sub,extra)=>'<button type="button" class="lcard sq" data-p="'+p+'"><span class="ltile">'+I[p]+'</span><b>'+esc(title)+'</b><small>'+esc(sub)+'</small>'+(extra||'')+'</button>';
   const c={
-    tt:'<button type="button" class="lcard sq" data-p="tt"><b>時間割</b><div class="fill">'+miniTT()+'<span class="lbtn" data-p="find">'+I.find+'さがす</span></div></button>',
-    map:'<button type="button" class="lcard sq" data-p="map"><b>校内地図</b><div class="fill"><div class="lmap">'+MINIMAP+'</div></div></button>',
-    tea:'<button type="button" class="lcard sq" data-p="tea"><b>教員</b><div class="fill"><div class="lfaces"><i>美術</i><i>音楽</i><i>映像</i></div></div></button>',
-    jk:'<button type="button" class="lcard sq" data-p="jk"><b>受験生へ</b><div class="fill"><div class="lfaces"><i style="grid-column:1/3;width:46px;height:46px;background:var(--ink);color:#fff">3浪</i></div></div></button>',
-    ex:'<button type="button" class="lcard sq" data-p="ex"><b>展示</b><div class="fill"><div class="lmap" style="background:var(--blue-tint);color:#093FB4"><span style="width:46%">'+I.ex+'</span></div></div></button>'
+    tt:sq('tt','時間割',n?('今学期 '+n+'コマ'):'まだ空です','<span class="lbtn" data-p="find">さがす</span>'),
+    map:sq('map','校内地図','上野・取手'),
+    tea:sq('tea','教員',nt),
+    jk:sq('jk','受験生へ','先輩の受験記'),
+    ex:sq('ex','展示','いま見られる')
   };
-  const rows=(title,items)=>'<div class="lcard lwide"><b>'+esc(title)+'</b><div class="lrows">'+items.map(([p,l,s])=>
-    '<button type="button" class="lr" data-p="'+p+'"><span class="ic">'+I[p]+'</span><span>'+esc(l)+'</span>'+(s?'<small>'+esc(s)+'</small>':'')+'<span class="chev">'+I.chev+'</span></button>').join('')+'</div></div>';
-  if(r==='juken') return '<div class="lrow">'+c.jk+c.map+c.tea+'</div>'+rows('見る',[['ex','展示・講評',''],['kb','公募','']])+featJk();
-  if(r==='guest') return '<div class="lrow">'+c.ex+c.map+c.tea+'</div>'+rows('見る',[['kb','公募',''],['art','アーティスト','']]);
-  return '<div class="lrow">'+c.tt+c.map+c.tea+'</div>'+rows('予約',[['rs','AMC・工房','']])+featJk();
+  const rows=(title,items)=>'<div class="lcard wide lwide"><b>'+esc(title)+'</b><div class="lrows">'+items.map(([p,l,ic])=>
+    '<button type="button" class="lr" data-p="'+p+'"><span class="ltile s">'+I[ic||p]+'</span><span>'+esc(l)+'</span><span class="chev">'+I.chev+'</span></button>').join('')+'</div></div>';
+  if(r==='juken') return '<div class="lrow">'+c.jk+c.map+c.tea+'</div>'+rows('見る',[['ex','展示・講評'],['kb','公募']])+featJk();
+  if(r==='guest') return '<div class="lrow">'+c.ex+c.map+c.tea+'</div>'+rows('見る',[['kb','公募'],['art','アーティスト']]);
+  return '<div class="lrow">'+c.tt+c.map+c.tea+'</div>'+rows('予約',[['rs','AMC','amc'],['rs','工房','kobo']])+featJk();
 }
 function featJk(){
   if(typeof JUKEN_POSTS==='undefined') return '';
@@ -180,22 +184,24 @@ function renderHome(){
   secHome.querySelectorAll('[data-p]').forEach(b=>b.addEventListener('click',e=>{ e.stopPropagation(); window.go(b.dataset.p); }));
 }
 
-/* ---------- 知る／ニュース の帯 ---------- */
-function mountKnow(){
-  const el=document.getElementById('p-ar'); if(!el || el.querySelector('.lstrip')) return;
-  const s=document.createElement('div'); s.className='lstrip';
-  s.innerHTML=KNOW.map(p=>'<button type="button" class="chipg" data-p="'+p+'"><span class="ic">'+I[p]+'</span>'+esc(NAME[p])+'</button>').join('');
-  s.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>window.go(b.dataset.p));
-  el.insertBefore(s,el.firstChild);
-}
-function mountSeg(p){
+/* ---------- 知る：大見出し＋チップ（展示・講評／公募／譲り合い／留学／就活） ---------- */
+function mountKnow(p){
   const el=document.getElementById('p-'+p); if(!el) return;
-  let s=el.querySelector('.lseg');
-  if(!s){ s=document.createElement('div'); s.className='lseg';
-    s.innerHTML='<div class="pill"></div>'+NEWS.map(k=>'<button type="button" data-p="'+k+'">'+esc(NAME[k])+'</button>').join('');
-    s.querySelectorAll('button').forEach(b=>b.onclick=()=>window.go(b.dataset.p)); el.insertBefore(s,el.firstChild); }
-  s.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b.dataset.p===p));
-  s.querySelector('.pill').style.transform='translateX('+(NEWS.indexOf(p)*100)+'%)';
+  let k=el.querySelector('.lk.know');
+  if(!k){ k=document.createElement('div'); k.className='lk know';
+    k.innerHTML='<div class="ltitle"><h2>知る</h2><button type="button" class="lcirc" aria-label="さがす">'+I.find+'</button></div>'+
+      '<div class="lchips">'+KNOW.map(x=>'<button type="button" data-p="'+x+'">'+esc(NAME[x])+'</button>').join('')+'</div>';
+    k.querySelector('.lcirc').onclick=()=>window.go('find');
+    k.querySelectorAll('.lchips button').forEach(b=>b.onclick=()=>window.go(b.dataset.p));
+    el.insertBefore(k,el.firstChild); }
+  k.querySelectorAll('.lchips button').forEach(b=>b.classList.toggle('on',b.dataset.p===p));
+}
+/* ---------- ニュース＝GEIDAYの記事 ---------- */
+function mountNews(){
+  const el=document.getElementById('p-ar'); if(!el || el.querySelector('.lk.news')) return;
+  const k=document.createElement('div'); k.className='lk news';
+  k.innerHTML='<div class="ltitle"><h2>ニュース</h2></div>';
+  el.insertBefore(k,el.firstChild);
 }
 
 /* ---------- 上に引っ張るとグニャッ ---------- */
