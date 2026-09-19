@@ -262,22 +262,17 @@ let soudanGroup='';
 function renderSoudan(){
   if(typeof SOUDAN_THEMES==='undefined'){ secAi.innerHTML='<p class="jkl">読み込めませんでした。</p>'; return; }
   const T=SOUDAN_THEMES;
-  const groups=[...new Set(T.map(x=>x.group))];
-  const list=T.filter(x=>!soudanGroup||x.group===soudanGroup);
+  const list=T;
   secAi.innerHTML='<div class="lk">'+
     '<div class="ltitle"><h2>AIに相談</h2></div>'+
-    '<p class="jkl">選ぶとChatGPTが開いて、そのまま相談が始まります。1問ずつ聞かれて、最後に今週やることが3つ出ます。</p>'+
-    '<div class="lchips" id="sdg">'+
-      '<button type="button" class="'+(soudanGroup?'':'on')+'" data-g="">すべて<small>'+T.length+'</small></button>'+
-      groups.map(g=>'<button type="button" class="'+(soudanGroup===g?'on':'')+'" data-g="'+esc(g)+'">'+esc(g)+'<small>'+T.filter(x=>x.group===g).length+'</small></button>').join('')+
-    '</div>'+
+    '<p class="jkl">選ぶとChatGPTが開いて、そのまま相談が始まります。最初に「どれに近いか」を聞かれて、5問ほどで今週やることが3つ出ます。</p>'+
     '<div class="sdg2">'+list.map(x=>
       '<a class="lcard sdc" href="https://chatgpt.com/?q='+encodeURIComponent(x.prompt)+'" target="_blank" rel="noopener noreferrer">'+
-      '<span class="sdgp">'+esc(x.group)+'</span><b>'+esc(x.title)+'</b><small>'+esc(x.sub)+'</small></a>').join('')+'</div>'+
+      '<span class="ltile">'+I.ai2+'</span><b>'+esc(x.title)+'</b><small>'+esc(x.sub)+'</small></a>').join('')+'</div>'+
     '<p class="jknote">相談の内容はGEIDAYには残りません。ChatGPTとのやりとりになります。'+
       'つらさが強いときは、藝大の学生相談室（student-counselling@ml.geidai.ac.jp）や保健管理センター（050-5525-2456）にも行けます。</p>'+
     '</div>';
-  secAi.querySelectorAll('#sdg button').forEach(b=>b.onclick=()=>{ soudanGroup=b.dataset.g; renderSoudan(); scrollTo({top:0}); });
+
 }
 window.renderSoudan=renderSoudan;
 
