@@ -1,0 +1,2716 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Karla:wght@400;700&family=LINE+Seed+JP:wght@400;700;800&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<meta name="robots" content="noindex,nofollow">
+<!-- 予約タブのカレンダーは calendar.google.com を読む。先に接続を張って待ち時間を削る -->
+<link rel="preconnect" href="https://amc.geidai.ac.jp" crossorigin>
+<link rel="preconnect" href="https://calendar.google.com" crossorigin>
+<link rel="dns-prefetch" href="https://amc.geidai.ac.jp">
+<link rel="dns-prefetch" href="https://calendar.google.com">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GEIDAY ｜ 藝大を、可視化する。</title>
+<!-- LINEやSlackに貼ったときに出る見出し。ここが空だとURLが裸で出て、
+     何のリンクか分からず踏まれない。 -->
+<meta name="description" content="東京藝術大学の授業4,419件・校内地図・教員・公募・留学・就活をひとつにまとめた、学生がつくった非公式のプラットフォーム。">
+<meta property="og:type" content="website">
+<meta property="og:title" content="GEIDAY ｜ 藝大を、可視化する。">
+<meta property="og:description" content="授業4,419件をさがす。時間割を組む。校内地図。教員。公募。留学。就活。ぜんぶ1つの画面で。">
+<meta property="og:image" content="ogp.png">
+<meta name="twitter:card" content="summary_large_image">
+<style>
+:focus-visible{outline:2px solid var(--ink-press);outline-offset:2px;border-radius:2px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+:root{color-scheme:light;
+  /* ══════════════════════════════════════════════════════
+     使ってよい色は6つ。ここに無い色をCSSに書かない。
+     例外は地図の地形色（§map-* / 情報レイヤーでUIではない）だけ。
+     ══════════════════════════════════════════════════════ */
+  --paper:#FFFFFF;        /* 白。画面の6〜7割 */
+  --text:#1A1A1A;         /* 黒。唯一の黒。白地17.4:1／オレンジ地5.35:1 */
+  --ink:#093FB4;          /* 青。白文字を載せてよい唯一の面（8.82:1） */
+  --orange:#FF5035;       /* オレンジ。面と図形。白文字は3.26:1で不可。
+                             載せる文字は必ず --text（5.35:1） */
+  --blue-tint:#EAF0FB;    /* 薄い青。構造の面。上の青文字7.71 */
+  --orange-tint:#FFF0ED;  /* 薄いオレンジ。注意の面。上の青文字7.95 */
+
+  /* 6色から導いた濃さ違い（新しい色相は足していない） */
+  --blue-tint2:#DCE5F7;   /* 選択中の面 */
+  --orange-tint2:#FFDED7;
+  --ink-press:#0837A0;    /* 押下・フォーカスリング。白文字10.2:1 */
+
+  /* 黒の強さ違い。色ではなく濃度 */
+  --sub:#4A5668;          /* 二次テキスト。白7.44 */
+  --faint:#616B7B;        /* 三次テキスト。白5.39
+                             ※旧#8B96A8は白地2.99:1で不適合だった */
+  --ghost:#8A8A8A;        /* 消灯グリフ専用（未お気に入りの☆・空の＋・空星）
+                             白3.45。旧--ruleの1.29では見えていなかった。
+                             文字には使わない */
+
+  /* 線と面は役割を分ける。旧--ruleは91箇所で3役を兼ねていた */
+  --rule:#C9D3E8;         /* 罫線専用。白1.50。線は減らして濃くする */
+  --face:var(--blue-tint);/* 旧--ruleを「面」に使っていた箇所の受け皿 */
+
+  --hover:var(--blue-tint);
+  --on-ink-hover:rgba(255,255,255,.14);
+
+  /* 影は3段だけ */
+  --e1:0 1px 2px rgba(9,63,180,.06);
+  --e2:0 3px 10px rgba(9,63,180,.10);
+  --e3:0 10px 30px rgba(9,63,180,.16);
+
+  /* 角丸はこの3値だけ */
+  --r-sm:4px; --r-md:8px; --r-pill:999px;
+
+  /* 地図の地形。UIとは別系統。6色ルールの外に置く */
+  --map-wood:#EEF1E9; --map-woodline:#CBD4C1;
+  --map-grass:#F1F3EC; --map-grassline:#D9DECF;
+  --map-water:#EAF0F3; --map-waterline:#C3D0D8;
+  --map-road:#DCD7CC; --map-path:#E7E2D8; --map-bound:#A9A296;
+  --map-dim:#DCE3F2;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{background:var(--paper);color:var(--text);-webkit-font-smoothing:antialiased}
+body{font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif;
+     font-feature-settings:"palt";font-size:14px;line-height:1.6}
+/* 見出しの書体は本文と同じゴシック。ここだけ明朝にすると、
+   タブごとに別のサイトに見える。以前は .mincho を19か所で使っていた。
+   残してあるのは、既存のマークアップを壊さないための空クラス。 */
+.mincho{font-weight:700;letter-spacing:.02em}
+button,select,input,textarea{font-family:inherit;color:inherit}
+
+/* ── ヘッダ：横書き・左上 ───────────────────── */
+/* ヘッダーは面で青を敷く。線で区切るより、面のほうが「設計された」見え方になる。
+   青地に白は 8.82:1 で読める（オレンジ地に白は 3.26:1 しかないので使わない）。 */
+header{background:var(--ink);position:sticky;top:0;z-index:30}
+/* ヘッダーは画面幅いっぱいに使う。中央に寄せると、
+   広い画面でロゴとタグラインが真ん中に浮いて据わりが悪い。
+
+   タグラインは Geiday の下。公式サイトと同じ積み方。
+   横に並べると帯は低くなるが、名前とタグラインが1行に伸びて締まらない。 */
+.hrow{width:100%;padding:16px 48px 6px;display:flex;align-items:center;gap:24px}
+/* 公式のロゴ（鳥のマーク＋Geiday）＋ タグライン */
+.brand{white-space:nowrap;display:flex;align-items:center;gap:20px}
+/* マークは背景を敷かずに、そのまま青の上に置く。
+   logo.js の画像は不透明画素の外接矩形で切り抜いてあり、
+   縁に白いにじみが無いことを確認済みなので、白い輪は出ない。 */
+.gmarkwrap{display:block;width:82px;flex:0 0 82px;line-height:0}
+.gmark{width:100%;height:auto;display:block}
+.btxt{display:block}
+.gword{font-family:Karla,"Helvetica Neue",Arial,sans-serif;font-weight:700;
+  font-size:52px;letter-spacing:.04em;color:var(--paper);display:block;line-height:1}
+.brand small{display:block;font-size:17px;letter-spacing:.28em;color:#fff;
+  font-weight:700;opacity:.97;margin-top:9px}
+/* 公式サイトと同じく、帯の右端にXとInstagram */
+.hsns{margin-left:auto;display:flex;gap:4px;align-items:center;flex:0 0 auto}
+.hsns a{display:grid;place-items:center;width:46px;height:46px;border-radius:50%;
+  color:#fff;opacity:.85;transition:background .12s,opacity .12s}
+.hsns a:hover{opacity:1;background:rgba(255,255,255,.2)}
+/* まだ入っていない人へのログイン。青い帯の上で唯一のオレンジにして、
+   ここが入口だと迷わせない。入っている人には出さない（=帯はロゴだけに戻る）。 */
+.hlogin{border:0;background:var(--orange);color:var(--text);cursor:pointer;
+  font-family:inherit;font-size:14px;font-weight:700;letter-spacing:.08em;
+  padding:11px 20px;border-radius:3px;margin-right:8px;white-space:nowrap;
+  transition:background .12s,color .12s}
+.hlogin:hover{background:var(--paper);color:var(--ink)}
+.hlogin[hidden]{display:none}
+/* 曜日が公開されていない科目についての断り書き。隠さず、数字で出す */
+.ttwarn{margin:16px 0 0;padding:11px 14px;background:var(--orange-tint);border:0;box-shadow:inset 3px 0 0 var(--orange);
+  border-radius:3px;font-size:13px;line-height:1.85;color:var(--ink)}
+.ttwarn b{color:var(--orange)}
+/* タブの文字の左端が、上のマークの左端（48px）に揃うようにする。
+   タブ自身が左に15px持っているので 48-15=33px。 */
+.tabs{width:100%;padding:9px 33px 0;display:flex;gap:2px;flex-wrap:wrap}
+/* タブは青の上。選んでいるものは白い面で抜く。下線1本より強く、迷わない。 */
+.tab{padding:8px 14px 9px;border:0;background:none;cursor:pointer;font-size:14px;
+  letter-spacing:.08em;color:#fff;opacity:.72;border-radius:4px 4px 0 0;
+  transition:background .12s,opacity .12s}
+.tab:hover{opacity:1;background:rgba(255,255,255,.14)}
+.tab.on{opacity:1;background:var(--paper);color:var(--ink);font-weight:700}
+.tab .n{font-size:11.5px;color:var(--faint);margin-left:5px;font-variant-numeric:tabular-nums}
+/* 本文も広く使う。ただし無制限にすると1行が長くなりすぎて目が戻れないので、
+   1行の文字数が破綻しない 1600px で止める。 */
+main{max-width:1600px;margin:0 auto;padding:24px 32px 90px}
+.pane{display:none} .pane.on{display:block}
+
+/* ── 時間割 ─────────────────────────────── */
+.ttbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+
+/* ── 時間割 ─────────────────────────────── */
+.ttbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:14px}
+.ttg{padding:6px 10px;border:1px solid var(--rule);background:var(--paper);font-size:13px;
+  border-radius:2px;cursor:pointer;font-family:inherit;color:var(--ink)}
+.seg{display:flex;border:1px solid var(--rule);border-radius:2px;overflow:hidden}
+.seg button{padding:6px 16px;border:0;background:var(--paper);cursor:pointer;font-size:13px;
+  color:var(--sub);border-right:1px solid var(--rule)}
+.seg button:last-child{border-right:0}
+.seg button.on{background:var(--ink);color:var(--paper);font-weight:700}
+.seg button:hover{background:var(--blue-tint);color:var(--ink)}
+.seg button.on:hover{background:var(--ink-press);color:var(--paper)}
+/* 選択肢が10個を超えると1行に収まらない。折り返す版。 */
+.seg.wrap{flex-wrap:wrap}
+.seg.wrap button{border-bottom:1px solid var(--rule)}
+.sum{margin-left:auto;font-size:13px;color:var(--sub);display:flex;gap:16px;align-items:baseline}
+.sum b{font-size:23px;color:var(--orange);font-variant-numeric:tabular-nums;font-weight:700}
+
+.grid{width:100%;border-collapse:collapse;table-layout:fixed;background:var(--paper)}
+.grid th,.grid td{border:1px solid var(--rule);vertical-align:top}
+.grid thead th{background:var(--paper);font-size:11.5px;font-weight:700;letter-spacing:.14em;
+  color:var(--sub);padding:8px 0;text-align:center}
+.grid th.ph{width:52px;font-size:11.5px;letter-spacing:.06em;padding:10px 4px;
+  background:var(--paper);color:var(--faint);text-align:center;font-weight:700;line-height:1.35}
+.grid th.ph i{display:block;font-style:normal;font-size:11px;color:var(--faint);
+  font-weight:400;margin-top:2px}
+.cell{height:86px;padding:0;position:relative}
+.cell .add{width:100%;height:100%;border:0;background:none;cursor:pointer;color:var(--ghost);
+  font-size:17px;transition:background .12s}
+.cell .add:hover{background:var(--hover);color:var(--orange)}
+.slot{height:100%;padding:8px 9px;cursor:pointer;position:relative;overflow:hidden;
+  background:var(--blue-tint);box-shadow:inset 3px 0 0 var(--ink);border:0;
+  transition:background .12s,color .12s}
+.slot:hover{background:var(--ink);color:var(--paper)}
+.slot:hover .sm{color:rgba(255,255,255,.85)}
+.slot:hover .x{color:var(--paper)}
+.slot .st{font-size:13px;font-weight:700;line-height:1.35;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.slot .sm{margin-top:4px;font-size:11px;color:var(--sub);line-height:1.5}
+.slot .x{position:absolute;top:2px;right:3px;border:0;background:none;cursor:pointer;
+  color:var(--faint);font-size:13px;line-height:1;padding:2px 4px;opacity:0}
+.slot:hover .x{opacity:1}
+.slot .x:hover{color:var(--orange)}
+/* 指の端末に hover は無い。隠したままだと、コマを消す方法が存在しないのと同じ。 */
+@media(hover:none){ .slot .x{opacity:1;top:0;right:0;padding:8px 10px} }
+/* 取れるか怪しいコマ・取れないコマは、青ではなくオレンジの面にする。
+   線の色を変えるだけだと、表の中では気づかない。 */
+.slot.warn{background:var(--orange-tint);box-shadow:inset 3px 0 0 var(--orange)}
+.slot.ng{background:var(--orange-tint2);box-shadow:inset 3px 0 0 var(--orange)}
+
+.other{margin-top:22px}
+.other h3{font-size:11.5px;letter-spacing:.2em;color:var(--faint);font-weight:800;
+  margin-bottom:9px}
+.chipline{display:flex;gap:7px;flex-wrap:wrap}
+.mini{display:flex;gap:7px;align-items:center;background:var(--paper);border:1px solid var(--rule);
+  padding:5px 8px 5px 10px;border-radius:2px;font-size:11.5px;border-left:3px solid var(--orange)}
+.mini button{border:0;background:none;cursor:pointer;color:var(--faint);font-size:13px;padding:0 2px}
+.mini button:hover{color:var(--orange)}
+
+/* ピッカー：右から出る引き出し。時間割を見たまま選べるようにする */
+.pkback{position:fixed;inset:0;background:rgba(9,63,180,.20);z-index:55}
+.picker{position:fixed;top:0;right:0;height:100vh;height:100dvh;width:min(430px,94vw);z-index:60;
+  background:var(--paper);border-left:1px solid var(--ink);display:flex;flex-direction:column;
+  box-shadow:-14px 0 40px rgba(9,63,180,.14);animation:slide .18s ease-out}
+@keyframes slide{from{transform:translateX(26px);opacity:.4}to{transform:none;opacity:1}}
+.pkhead{display:flex;align-items:baseline;gap:11px;padding:16px 18px 13px;
+  border-bottom:1px solid var(--rule);background:var(--paper);flex-wrap:wrap}
+.pkhead h3{font-size:19px;font-weight:700;letter-spacing:.02em;
+  letter-spacing:.06em}
+.pkhead .cnt{font-size:11.5px;color:var(--sub);flex-basis:100%;margin-top:-4px}
+.pkhead .close{position:absolute;top:12px;right:12px;border:0;background:none;cursor:pointer;
+  font-size:20px;color:var(--faint);padding:3px 7px;line-height:1}
+.pkhead .close:hover{color:var(--orange)}
+.pklist{flex:1;overflow-y:auto;overscroll-behavior:contain}
+.pkitem{display:grid;grid-template-columns:1fr auto;gap:5px 12px;align-items:center;
+  padding:11px 16px;border-bottom:1px solid var(--rule);cursor:pointer}
+.pkitem .right{grid-column:1;font-size:11.5px;text-align:left}
+.pkitem .v{grid-column:2;grid-row:1}
+.pkitem:hover{background:var(--hover)}
+.pkitem .t{font-size:14px;font-weight:700;line-height:1.4}
+.pkitem .m{font-size:11.5px;color:var(--sub);margin-top:2px}
+.pkempty{padding:40px 16px;text-align:center;color:var(--faint);font-size:13px}
+.pkitem .rk{display:inline-block;min-width:17px;font-size:11px;color:var(--faint);
+  font-variant-numeric:tabular-nums;font-weight:700}
+.pkitem .why{margin-top:4px;display:flex;gap:6px;flex-wrap:wrap}
+.pkitem .why span{font-size:11.5px;color:var(--sub);background:var(--orange-tint);
+  border:0;border-radius:2px;padding:1px 6px;line-height:1.6}
+.pkitem .why b{color:var(--orange);font-weight:700}
+.pkfilter{padding:10px 16px;border-bottom:1px solid var(--rule);display:flex;gap:9px;
+  align-items:center;flex-wrap:wrap}
+.pkfilter input[type=text]{flex:1;min-width:150px;padding:6px 8px;border:1px solid var(--rule);
+  background:var(--paper);font-size:13px;border-radius:2px}
+.pkfilter label{font-size:11.5px;color:var(--sub);display:inline-flex;gap:5px;align-items:center;
+  cursor:pointer;white-space:nowrap}
+.pkfilter label input{margin:0}
+
+/* ── さがす ─────────────────────────────── */
+.bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding-bottom:14px;
+  border-bottom:1px solid var(--rule);margin-bottom:6px}
+/* 教員の検索。並び替えは右端に固定して、検索欄がそこまで伸びる。
+   欄が広いほうが、何を打つ場所か迷わない。 */
+#p-tea .bar{flex-wrap:nowrap}
+#p-tea #tq{flex:1 1 auto;min-width:0}
+#p-tea #tsort{flex:0 0 auto;margin-left:auto}
+.bar input#q{flex:1;min-width:200px;padding:9px 0;border:0;border-bottom:1.4px solid var(--ink);
+  background:transparent;font-size:15px}
+.bar input#q::placeholder{color:var(--faint)}
+/* 絞り込みのセレクトも面で作る。矢印は appearance:none で消えるので自分で描く。
+   ふだんは薄い青に青文字（7.71:1）、ホバーで青の面に白（8.82:1）。 */
+.bar select{padding:8px 28px 8px 12px;border:0;background-color:var(--blue-tint);
+  color:var(--ink);font-size:13px;border-radius:2px;cursor:pointer;
+  appearance:none;-webkit-appearance:none;background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'><path d='M1 1l4 4 4-4' fill='none' stroke='%23093FB4' stroke-width='1.8' stroke-linecap='round'/></svg>");
+  background-repeat:no-repeat;background-position:right 10px center;
+  transition:background-color .12s,color .12s}
+.bar select:hover{background-color:var(--ink);color:var(--paper);
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'><path d='M1 1l4 4 4-4' fill='none' stroke='%23FFFFFF' stroke-width='1.8' stroke-linecap='round'/></svg>")}
+.count{font-size:11.5px;color:var(--sub);padding:10px 0 4px}
+.count b{color:var(--orange);font-weight:700;font-variant-numeric:tabular-nums}
+
+ol{list-style:none}
+li.row{border-bottom:1px solid var(--rule);padding:13px 0 12px;display:grid;
+  grid-template-columns:30px 1fr 132px;gap:12px;align-items:start;cursor:pointer}
+/* 行のホバーは面で。ただし4200行あるので、
+   スクロール中にチカチカしないよう、変化は薄く・切り替えは即座に。 */
+li.row:hover{background:var(--hover)}
+/* 開いた行の左に青い帯を引く。帯は内側に描かれるので、
+   同じぶん左に余白を足さないと1文字目に重なる（スマホ幅で顕著だった）。 */
+li.row.open{background:var(--blue-tint);box-shadow:inset 3px 0 0 var(--ink);
+  padding-left:13px;padding-right:13px}
+.fav{border:0;background:none;cursor:pointer;font-size:17px;color:var(--ghost);
+  padding:1px 0 0;line-height:1;transition:color .12s}
+.fav:hover{color:var(--orange)}
+.fav.on{color:var(--orange)}
+.ti{font-size:19px;font-weight:700;line-height:1.4;letter-spacing:.01em}
+.mt{margin-top:4px;font-size:11.5px;color:var(--sub);line-height:1.6}
+.mt .dot{color:var(--ghost);margin:0 6px}
+.slotpin{display:inline-block;background:var(--ink);color:var(--paper);font-size:11px;
+  padding:1px 6px;border-radius:2px;letter-spacing:.04em;font-weight:700;margin-right:7px;
+  font-variant-numeric:tabular-nums}
+.slotpin.none{background:var(--face);color:var(--sub)}
+.right{text-align:right}
+.v{display:inline-block;padding:2px 8px;border-radius:2px;font-weight:700;font-size:11.5px;
+  letter-spacing:.03em;white-space:nowrap}
+/* 6種類あるのに色は青とオレンジしかない。
+   足りないぶんは「塗り／薄い面／縁取り／文字だけ」の4段で分ける。
+   色だけに頼らないので、色が見分けにくい人にも形で伝わる。
+
+     卒業単位になる   青の塗り        いちばん強い肯定
+     履修できます     薄い青          弱い肯定
+     要確認           オレンジの薄面   注意
+     履修不可         オレンジの塗り   いちばん強い否定
+     卒業単位にならない 青の縁取り      否定だが履修は可
+     条件の記載なし    文字だけ        判定していない
+   オレンジ地に白は 3.26:1 しかないので、塗りの上の文字は必ず黒にする。 */
+.v.ok  {color:#fff;background:var(--ink)}
+.v.warn{color:var(--ink);background:var(--blue-tint)}
+.v.check{color:var(--text);background:var(--orange-tint2)}
+.v.no  {color:var(--text);background:var(--orange)}
+.v.no2 {color:var(--ink);background:#fff;box-shadow:inset 0 0 0 1.5px var(--ink)}
+.v.none{color:var(--faint);background:none;padding-left:0;padding-right:0;font-weight:400}
+.rate{margin-top:6px;font-size:11.5px;color:var(--sub);white-space:nowrap}
+.stars{color:var(--orange);letter-spacing:.04em}
+.stars .off{color:var(--ghost)}
+.rate .num{font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.norate{margin-top:6px;font-size:11.5px;color:var(--faint)}
+
+/* 詳細 */
+.detail{display:none;grid-column:2/-1;padding:14px 0 4px}
+li.row.open .detail{display:block}
+.dgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px 18px;
+  padding-bottom:13px;border-bottom:1px dashed var(--rule)}
+.dgrid b{display:block;font-size:11px;letter-spacing:.18em;color:var(--faint);margin-bottom:2px}
+.dgrid span{font-size:13px}
+.note{border-left:2.5px solid var(--orange);padding:7px 0 7px 12px;margin-top:9px}
+.note .k{font-size:11px;letter-spacing:.18em;color:var(--orange);font-weight:800;margin-bottom:3px}
+.note .t{font-size:13px;line-height:1.75}
+.note .src{margin-top:4px;font-size:11.5px;color:var(--sub);line-height:1.7}
+.acts{margin-top:14px;display:flex;gap:9px;flex-wrap:wrap;align-items:center}
+.btn{padding:7px 15px;border:1px solid var(--ink);background:transparent;font-size:13px;
+  cursor:pointer;letter-spacing:.05em;border-radius:2px;text-decoration:none;
+  color:var(--ink);display:inline-block;transition:background .12s,color .12s}
+.btn:hover{background:var(--ink);color:var(--paper)}
+.btn.o{border-color:var(--orange);color:var(--orange)}
+.btn.o:hover{background:var(--orange);color:var(--text)}
+/* 掲示板の主ボタンだけ線で、下の絞り込みが面という逆転があった。
+   主役をオレンジの面にする。オレンジ地の文字は必ず黒（5.35:1）。 */
+.bhead>.btn.o,.bsave>.btn.o,.bdacts>.btn.o{
+  border-color:var(--orange);background:var(--orange);color:var(--text);font-weight:700}
+.bhead>.btn.o:hover,.bsave>.btn.o:hover,.bdacts>.btn.o:hover{
+  background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.btn:disabled{opacity:.4;cursor:default}
+.btn:disabled:hover{background:transparent;color:var(--ink)}
+a.link{font-size:11.5px;color:var(--orange);border-bottom:1px solid var(--orange);
+  text-decoration:none;padding-bottom:1px}
+
+/* 口コミ */
+.rv{border-top:1px solid var(--rule);margin-top:16px;padding-top:13px}
+.rv h3{font-size:11px;letter-spacing:.2em;color:var(--faint);font-weight:800;margin-bottom:10px}
+.rvitem{padding:9px 0;border-bottom:1px dashed var(--rule);position:relative}
+.rvhead{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.rvmeta{font-size:11.5px;color:var(--sub)}
+.rvbody{margin-top:5px;font-size:13px;line-height:1.85}
+.rvchips{margin-top:5px;display:flex;gap:5px;flex-wrap:wrap}
+.tag{font-size:11px;padding:2px 7px;border-radius:2px;background:var(--paper);
+  border:1px solid var(--rule);color:var(--sub);white-space:nowrap}
+.tag.hot{border-color:var(--orange);color:var(--orange)}
+.del{position:absolute;top:8px;right:0;border:0;background:none;cursor:pointer;
+  font-size:11.5px;color:var(--faint);text-decoration:underline;padding:2px 4px}
+.del:hover{color:var(--text);text-decoration-thickness:2px}
+.form{margin-top:12px;padding:14px 16px;background:var(--paper);border:1px solid var(--rule);
+  border-radius:3px}
+.form .fr{display:flex;gap:14px;flex-wrap:wrap;align-items:flex-end;margin-bottom:10px}
+.form label{font-size:11px;letter-spacing:.14em;color:var(--faint);font-weight:800;
+  display:block;margin-bottom:4px}
+.form select,.form textarea{font-size:13px;border:1px solid var(--rule);background:var(--paper);
+  border-radius:2px;padding:6px 8px}
+.form textarea{width:100%;min-height:60px;resize:vertical;line-height:1.7}
+.pick{display:flex;gap:2px}
+/* 星の見た目は変えず、当たり判定だけ広げる。22px間隔では狙った星を押せない */
+.pick button{font-size:20px;line-height:1;background:none;border:0;cursor:pointer;
+  color:var(--ghost);padding:8px 6px}
+.pick button.on{color:var(--orange)}
+.chipset{display:flex;gap:5px;flex-wrap:wrap}
+.chipset button{font-size:11.5px;padding:3px 9px;border:1px solid var(--rule);
+  background:var(--paper);color:var(--sub);border-radius:2px;cursor:pointer}
+.chipset button.on{border-color:var(--orange);color:var(--orange);font-weight:700}
+.disc{margin-top:8px;font-size:11px;color:var(--faint);line-height:1.7}
+
+/* お気に入り */
+.favbar{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:14px;
+  padding-bottom:12px;border-bottom:1px solid var(--rule)}
+.favbar .lb{font-size:11.5px;letter-spacing:.18em;color:var(--faint);font-weight:800}
+/* 絞り込みのボタン。枠線ではなく面で作る。
+   1pxの枠に文字を置いただけだと、どのタブも「素のHTML」に見える。 */
+.tbtn{font-size:12px;padding:6px 13px;border:0;background:var(--blue-tint);
+  cursor:pointer;color:var(--ink);transition:background .12s,color .12s}
+.tbtn:hover{background:var(--ink);color:var(--paper)}
+.tbtn.on{background:var(--ink);color:var(--paper);font-weight:700}
+.tbtn.on:hover{background:var(--ink-press)}
+.tagedit{margin-top:9px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.tagedit input{padding:4px 8px;border:1px solid var(--rule);background:var(--paper);
+  font-size:11.5px;border-radius:2px;width:120px}
+.mytag{font-size:11.5px;padding:2px 7px;border-radius:2px;background:var(--ink);color:var(--paper);
+  display:inline-flex;gap:5px;align-items:center}
+.mytag button{border:0;background:none;color:var(--paper);cursor:pointer;font-size:11.5px;
+  opacity:.7;padding:0}
+.mytag button:hover{opacity:1}
+
+/* ── ダミーの帯 ─────────────────────────── */
+.dbar{background:var(--orange-tint);box-shadow:inset 0 -1px 0 var(--orange);padding:7px 26px;
+  font-size:11.5px;color:var(--text);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.dbar.off{background:var(--paper);border-color:var(--rule);color:var(--sub)}
+.dbar b{font-weight:700}
+.dbar button{margin-left:auto;border:1px solid currentColor;background:none;cursor:pointer;
+  font-size:11.5px;padding:2px 10px;border-radius:2px;color:inherit}
+
+/* ── 学科ごとの評価 ─────────────────────── */
+.deptbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:11px}
+.dchip{font-size:11.5px;border:1px solid var(--rule);background:var(--paper);
+  padding:2px 8px;border-radius:2px;color:var(--sub);white-space:nowrap}
+.dchip b{color:var(--orange);font-weight:700;font-variant-numeric:tabular-nums}
+.dchip i{font-style:normal;color:var(--faint);font-size:11px}
+.dchip.me{border-color:var(--orange);background:var(--orange-tint)}
+.only{display:block;font-size:11.5px;color:var(--sub);margin-bottom:10px;cursor:pointer}
+.only input{margin-right:5px}
+/* 口コミの学科ラベル。以前ヘッダにも .who があって規則がぶつかっていた。
+   ヘッダ側を消したので、いま .who を使うのはこの1本だけ。 */
+.rvmeta .who{color:var(--ink);font-weight:700;margin-right:6px}
+
+/* ── 履修率 ─────────────────────────────── */
+.rate2{font-size:13px;margin-bottom:9px}
+.rate2 .pct{font-size:20px;color:var(--orange);font-weight:800;font-variant-numeric:tabular-nums}
+.rate2 .k{font-size:11.5px;color:var(--faint)}
+.rate2.few{color:var(--faint);font-size:11.5px}
+.bars{margin:8px 0 13px;display:grid;gap:4px;max-width:560px}
+.trbar{display:grid;grid-template-columns:112px 1fr 76px;gap:9px;align-items:center;font-size:11.5px}
+.bl{color:var(--sub);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bg{height:7px;background:var(--face);border-radius:1px;overflow:hidden}
+.bg i{display:block;height:100%;background:var(--orange)}
+.bn{font-variant-numeric:tabular-nums;color:var(--ink);font-weight:700;text-align:right}
+.bn em{font-style:normal;font-weight:400;color:var(--faint);margin-left:5px;font-size:11px}
+
+/* ── 履修記録の登録 ──────────────────────── */
+.submit-rec{margin-top:20px;padding:15px 18px;background:var(--paper);
+  border:1px solid var(--ink);border-radius:3px}
+.submit-rec h4{font-size:15px;font-weight:700;
+  margin-bottom:5px}
+.submit-rec p{font-size:11.5px;color:var(--sub);line-height:1.8;margin-bottom:11px}
+.sr{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sr select{padding:6px 9px;border:1px solid var(--rule);background:var(--paper);
+  font-size:13px;border-radius:2px}
+.subdone{margin-top:9px;font-size:11.5px;color:var(--faint)}
+
+/* 校地の切り替え */
+.mcamp{display:flex;gap:5px;flex-wrap:wrap;align-items:center;padding:0 0 10px}
+.mcamp button{font-size:13px;padding:6px 14px;border:0;background:var(--blue-tint);
+  border-radius:2px;cursor:pointer;color:var(--ink);transition:background .12s,color .12s}
+.mcamp button:hover{background:var(--ink);color:var(--paper)}
+.mcamp button.on{border-color:var(--orange);background:var(--orange);color:var(--text);font-weight:700}
+.mcsrc{margin-left:auto;font-size:11.5px;color:var(--faint);text-align:right;line-height:1.6}
+body.mapfull main{max-width:none;padding:0}
+/* 予約も端まで使う。左右の余白で細くなるとカレンダーが読みにくい */
+body.rsfull main{max-width:none;padding:0}
+body.rsfull #p-rs{padding:22px 26px 0}
+body.rsfull .rframe{height:calc(100vh - var(--rshead,300px));height:calc(100dvh - var(--rshead,300px));min-height:520px}
+body.mapfull .mcamp{max-width:none;padding:10px 32px}
+/* ══════ 校内地図タブ ══════ */
+#p-map.on{display:flex;flex-direction:column}
+.maplayout{display:grid;grid-template-columns:250px 1fr 340px;gap:0;
+  /* 行の高さは必ず枠に合わせる。これが無いと行は中身に合わせて伸びる。
+     canvas の描画バッファは DPR 倍のピクセル数で、height:100% の親が
+     auto だと、その属性ピクセルがそのまま CSS 高さとして採用される。
+     つまり「枠499px・中身1030px」ができて、段が下へ倍々に育っていく。
+     地図の右が白く空く・ボタン列が画面の外へ落ちる、の正体はこれだった。 */
+  grid-template-rows:minmax(0,100%);overflow:hidden;
+  border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
+  background:var(--paper);height:var(--maph,60vh);min-height:420px}
+/* 建物を選んでいないあいだ、右の欄は中身が無い。
+   幅だけ残すと画面の1/4が白く空いて、壊れているように見える。畳む。 */
+.maplayout.nosel{grid-template-columns:250px 1fr 0}
+.maplayout.nosel #mpanel{border-left:0;padding:0;overflow:hidden}
+/* 地図タブのときだけ、本文の余白を外して端まで使う */
+body.mapfull main{max-width:none;padding:0}
+/* 予約も端まで使う。左右の余白で細くなるとカレンダーが読みにくい */
+body.mapfull .mfoot{max-width:none;padding:8px 32px 14px}
+.mside{border-right:1px solid var(--rule);overflow-y:auto;padding:12px 0}
+.msh{font-size:11px;letter-spacing:.2em;color:var(--faint);padding:0 14px 7px;font-weight:800}
+.mfilt{padding:0 14px 10px;display:flex;gap:5px;flex-wrap:wrap}
+.mfilt button{font-size:11.5px;padding:5px 11px;border:0;background:var(--blue-tint);
+  border-radius:2px;cursor:pointer;color:var(--ink);transition:background .12s,color .12s}
+.mfilt button:hover{background:var(--ink);color:var(--paper)}
+.mfilt button.on{background:var(--ink);color:var(--paper);font-weight:700}
+.mrow{display:grid;grid-template-columns:24px 1fr auto;gap:7px;padding:8px 14px;cursor:pointer;
+  border:0;align-items:baseline;transition:background .12s,color .12s}
+.mrow:nth-child(even){background:var(--blue-tint)}
+.mrow:hover{background:var(--ink);color:var(--paper)}
+.mrow:hover .msub,.mrow:hover .m1,.mrow:hover .m3{color:rgba(255,255,255,.85)}
+.mrow.on{background:var(--orange);color:var(--text)}
+.mrow.on .msub,.mrow.on .m1,.mrow.on .m3{color:var(--text);opacity:.72}
+.m1{font-size:11.5px;color:var(--faint);font-variant-numeric:tabular-nums}
+.m2{font-size:13px;line-height:1.4}
+.m3{font-size:11px;color:var(--faint);white-space:nowrap;text-align:right;
+  font-variant-numeric:tabular-nums}
+.msub{font-size:11px;color:var(--faint);margin-top:1px;line-height:1.5}
+.mhas{font-size:11px;color:var(--orange);border:1px solid var(--orange);padding:0 3px;
+  margin-left:4px;white-space:nowrap}
+.mrow.on .mhas{color:var(--text);border-color:var(--text)}
+
+#mstage{position:relative;min-width:0;min-height:0;overflow:hidden;
+  overscroll-behavior:contain;background:var(--paper)}
+/* canvas は流れの中に置かない。絶対配置なら段の高さ計算に一切参加しないので、
+   上に書いた伸び方が構造として起きなくなる。 */
+#mcv{position:absolute;inset:0;width:100%;height:100%;cursor:grab;touch-action:none}
+#mcv:active{cursor:grabbing}
+#mlabels{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.mlb{position:absolute;left:0;top:0;will-change:transform;font-size:11px;white-space:nowrap;
+  color:var(--ink);background:var(--paper);padding:0 3px;border:1px solid var(--ink);
+  pointer-events:auto;cursor:pointer;line-height:1.5;
+  }
+.mlb:hover,.mlb.on{background:var(--orange);color:var(--text);border-color:var(--orange)}
+.mlb.dim{opacity:.3}
+.mgt{position:absolute;left:0;top:0;will-change:transform;font-size:11px;color:var(--sub);
+  background:var(--paper);padding:0 3px;white-space:nowrap;line-height:1.5}
+.mfl{position:absolute;left:0;top:0;will-change:transform;font-size:11px;color:var(--faint);
+  white-space:nowrap;padding-left:4px;font-variant-numeric:tabular-nums}
+#mhud{position:absolute;left:14px;bottom:12px;font-size:11.5px}
+#mhud button{border:0;background:var(--blue-tint);color:var(--ink);padding:5px 11px;
+  font-size:11.5px;margin-right:4px;cursor:pointer;border-radius:2px;
+  transition:background .12s,color .12s}
+#mhud button:hover,#mhud button.on{background:var(--orange);color:var(--text);border-color:var(--orange)}
+.mhint{margin-top:6px;color:var(--faint);font-size:11px;line-height:1.6}
+
+#mpanel{border-left:1px solid var(--rule);overflow-y:auto;padding:16px 16px 30px}
+.mempty{color:var(--faint);font-size:13px;line-height:2;padding-top:30px}
+.mhead{position:relative;padding-right:34px}
+.mclose{position:absolute;top:-9px;right:-9px;width:44px;height:44px;border:0;
+  background:transparent;color:var(--faint);font-size:19px;line-height:1;cursor:pointer}
+.mclose:hover{color:var(--ink)}
+/* 中身は押したときだけ開く。閉じているあいだ、板は名前と階数ぶんの高さで済む。 */
+.mmore{display:block;width:100%;margin-top:11px;border:0;cursor:pointer;
+  background:var(--blue-tint);color:var(--ink);font-size:12px;font-weight:700;
+  padding:9px 12px;border-radius:2px;text-align:left;
+  transition:background .12s,color .12s}
+.mmore i{float:right;font-style:normal;font-size:10px}
+.mmore:hover{background:var(--ink);color:var(--paper)}
+.mhead .mno{font-size:11.5px;color:var(--faint);font-variant-numeric:tabular-nums}
+.mhead h3{font-size:17px;font-weight:700;line-height:1.4;letter-spacing:.02em}
+.men{font-size:11.5px;color:var(--faint);margin-top:1px}
+.mmeta{font-size:11.5px;color:var(--sub);margin-top:6px;line-height:1.7}
+.mmemo{font-size:13px;margin-top:8px;line-height:1.75}
+.mnote{font-size:11.5px;color:var(--faint);margin-top:7px;line-height:1.75}
+.msec{margin-top:18px;border-top:1px solid var(--rule);padding-top:12px}
+.msec h4{font-size:11px;letter-spacing:.18em;color:var(--faint);font-weight:800;margin-bottom:9px}
+.minfo{list-style:none;font-size:13px;line-height:1.85}
+.minfo li{padding-left:11px;position:relative;margin-bottom:3px}
+.minfo li:before{content:"—";position:absolute;left:0;color:var(--orange)}
+.msrc{font-size:11px;color:var(--faint);line-height:1.7;margin-top:8px}
+.msrc a{color:var(--orange)}
+.mfr{display:grid;grid-template-columns:32px 1fr;gap:7px;padding:7px 8px;
+  border:0;font-size:11.5px;align-items:baseline;cursor:pointer;
+  transition:background .12s,color .12s}
+.mfr:nth-child(even){background:var(--blue-tint)}
+.mfr:hover{background:var(--ink);color:var(--paper)}
+.mfr:hover .mn,.mfr:hover .mrn,.mfr:hover .mc{color:rgba(255,255,255,.85)}
+.mfr.on{background:var(--orange);color:var(--text)}
+.mfr.on .mn,.mfr.on .mrn,.mfr.on .mc{color:var(--text);opacity:.72}
+.mn{font-size:11.5px;color:var(--faint);font-variant-numeric:tabular-nums}
+.mc{color:var(--faint);font-size:11.5px}
+.mrn{font-size:11px;color:var(--faint);line-height:1.6;margin-top:2px;
+  font-variant-numeric:tabular-nums}
+.mposts{margin-bottom:11px}
+.mpost{padding:8px 0;border-bottom:1px dashed var(--rule);position:relative}
+.mpmeta{font-size:11px;color:var(--faint)}
+.mdum{font-size:11px;border:1px solid var(--faint);padding:0 3px;margin-left:5px}
+.mpbody{font-size:13px;line-height:1.8;margin-top:3px}
+.mpdel{position:absolute;top:6px;right:0;border:0;background:none;font-size:11px;
+  color:var(--faint);text-decoration:underline;cursor:pointer}
+.mform textarea{width:100%;min-height:56px;resize:vertical;font-family:inherit;font-size:13px;
+  border:1px solid var(--rule);border-radius:2px;padding:6px 8px;line-height:1.7}
+.mfrow{display:flex;gap:7px;margin-top:7px;align-items:center}
+.mfrow input{flex:1;min-width:0;font-family:inherit;font-size:11.5px;padding:5px 8px;
+  border:1px solid var(--rule);border-radius:2px}
+.mdisc{font-size:11px;color:var(--faint);line-height:1.7;margin-top:7px}
+.midle{cursor:pointer;border-radius:2px;padding-left:6px;margin-left:-6px}
+.midle:hover{background:var(--hover)}
+.midle .mpbody{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+  overflow:hidden}
+.mfoot{font-size:11px;color:var(--faint);line-height:1.8;padding:9px 2px 0}
+@media(max-width:980px){
+  /* 縦に積むなら、地図を見に来た人にまず地図を見せる。
+     もとは建物一覧が上にあって、地図が画面の下半分に押し出されていた。 */
+  .maplayout{display:flex;flex-direction:column;height:auto}
+  #mstage{order:1}   /* 高さは下の指定に一本化。二重指定は片方が黙って死ぬ */
+  /* スマホでは地図だけを出す。建物の一覧を下に長々と並べると、
+     地図が画面の一部になってしまい、拡大しても見づらいまま。
+     建物の情報は、地図の上でその建物を押せば出る。 */
+  .mside{display:none}
+  #mstage{height:calc(100vh - 190px);height:calc(100dvh - 190px);min-height:380px}
+  /* 建物の説明は、押したときだけ地図の上にせり出す。
+     ふだんは画面いっぱいが地図。 */
+  #mpanel{position:fixed;left:0;right:0;bottom:0;z-index:40;
+    max-height:52vh;overflow:auto;border:0;padding:16px 15px 22px;
+    background:var(--paper);box-shadow:0 -6px 24px rgba(9,63,180,.16);
+    transform:translateY(101%);transition:transform .24s cubic-bezier(.16,1,.3,1)}
+  #mpanel.mopen{transform:none}
+  /* 右寄せの住所・出典は、折り返すと行が散らかる */
+  .mcsrc{margin-left:0;text-align:left;width:100%;padding-top:4px}
+  /* ボタンが8個も横に並ぶと地図の下端を覆ってしまう。小さくして2段に流す */
+  #mhud{left:8px;right:8px;bottom:8px;display:flex;flex-wrap:wrap;gap:4px;
+    background:rgba(250,248,244,.86);backdrop-filter:blur(2px);
+    padding:5px 6px;border-radius:3px}
+  #mhud button{margin-right:0;padding:3px 8px;font-size:11.5px}
+  .mhint{width:100%;margin-top:2px;font-size:11px}
+  /* HUDが地図の13.5%を覆っていた。視点の4つはスマホでは畳む
+     （指で回せるので、ボタンで視点を選ぶ必要が薄い）。 */
+  #mhud button[data-v="south"],#mhud button[data-v="gate"]{display:none}
+  /* 長い建物名がラベル幅261px＝画面の70%を占めて切れていた */
+  .mlb{max-width:44vw;overflow:hidden;text-overflow:ellipsis}
+}
+
+
+/* ══════ 教員タブ ══════ */
+li.trow{grid-template-columns:1fr 76px}
+.kchip{font-size:11px;border:0;padding:2px 8px;background:var(--orange-tint);
+  color:var(--ink);margin-right:4px;white-space:nowrap;display:inline-block}
+li.row.open .kchip{background:var(--paper)}
+.trow .right{text-align:right}
+/* 開いた行（薄い青）の上でオレンジ文字は 2.85:1。青にすると 7.71:1。
+   留学タブの数字（.rybn）と同じ扱い。 */
+.cn{font-size:23px;font-weight:700;color:var(--ink);font-variant-numeric:tabular-nums}
+.cu{font-size:11px;color:var(--faint);margin-left:3px}
+li.trow .detail{grid-column:1/-1}
+/* 経歴。一覧では1行だけ、開くと全部。
+   researchmap に登録が無い人は、この欄そのものが出ない。 */
+.tbio1{font-size:12.5px;color:var(--sub);line-height:1.7;margin-top:3px;
+  display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+/* 開いた行そのものが薄い青なので、経歴は白い面で抜く。
+   同じ薄い青を重ねると、どこからどこまでが経歴か分からなくなる。 */
+.tbio{background:var(--paper);padding:15px 17px 14px;margin-bottom:14px}
+.tbh{font-size:11px;letter-spacing:.18em;color:var(--ink);font-weight:800;margin-bottom:6px}
+.tbio p{font-size:13px;line-height:1.9;color:var(--text);margin:0}
+.tbio p+p{margin-top:2px}
+.tbsrc{font-size:11.5px;color:var(--sub);margin-top:9px}
+.tbsrc a{color:var(--ink);font-weight:700}
+.tbio.none{background:none;padding:0 0 12px;font-size:12px;color:var(--faint)}
+.tcourses{padding-top:4px}
+.tch{font-size:11px;letter-spacing:.18em;color:var(--faint);font-weight:800;margin-bottom:7px}
+/* 60行に罫線を60本引くと、そこだけ表計算ソフトに見える。
+   1行おきに薄く敷いて、線は1本も使わない。 */
+.tcrow{display:grid;grid-template-columns:46px 1fr 190px 44px;gap:10px;padding:6px 9px;
+  border:0;font-size:13px;align-items:baseline;transition:background .12s,color .12s}
+.tcrow:nth-child(odd){background:var(--paper)}
+.tcrow:hover{background:var(--ink);color:var(--paper)}
+.tcrow:hover .tcy,.tcrow:hover .tck,.tcrow:hover .tcs{color:rgba(255,255,255,.85)}
+.tcy{font-size:11.5px;color:var(--faint);font-variant-numeric:tabular-nums}
+/* 開いた行は薄い青。そこにオレンジ文字だと 2.85:1 しか出ない。
+   面を青にして白を載せる（8.82:1）。幅いっぱいに伸びないよう左寄せにする。 */
+.tct{cursor:pointer;font-weight:700;justify-self:start;padding:1px 7px;margin-left:-7px;
+  transition:background .12s,color .12s}
+.tct:hover{background:var(--ink);color:var(--paper)}
+.tck{font-size:11.5px;color:var(--faint);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tcs{font-size:11.5px;color:var(--sub);text-align:right;font-variant-numeric:tabular-nums}
+.tcmore,.tsrc{font-size:11.5px;color:var(--faint);margin-top:8px;line-height:1.8}
+.tfoot{margin-top:26px;padding-top:14px;border-top:1px solid var(--rule);
+  font-size:11.5px;color:var(--faint);line-height:1.9}
+
+/* ══════ アーティストタブ ══════ */
+.acta{border:1px solid var(--ink);background:var(--paper);padding:16px 18px;margin-bottom:18px}
+.acta h3{font-size:17px;font-weight:700;margin-bottom:4px;letter-spacing:.02em}
+.acta{background:var(--blue-tint)!important;border:0!important}
+.acta p{font-size:13px;color:var(--sub);line-height:1.8;margin-bottom:11px}
+/* ══════ アーティスト ══════
+   ここだけ枠線で作られていて、就活・留学のタブと別のサイトに見えていた。
+   面で作り直す：カードは薄い青の面、押すと青の面、写真は角丸なしの矩形。
+   使う色は白・黒・オレンジ・青・薄いオレンジ・薄い青の6つだけ。 */
+.abar{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:16px}
+.albl{font-size:11px;letter-spacing:.18em;color:var(--faint);font-weight:800;margin-right:3px}
+.acnt{margin-left:auto;font-size:12px;color:var(--faint)}
+/* 横長のカードだと1枚が幅いっぱいを使うので、1画面に数人しか入らなかった。
+   正方形のタイルを4列に並べると、1画面で8〜12人ぶんが同時に見える。
+   画面が狭いときだけ3列・2列に落とす。 */
+.agrid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}
+@media(max-width:1180px){ .agrid{grid-template-columns:repeat(4,1fr)} }
+@media(max-width:980px){ .agrid{grid-template-columns:repeat(3,1fr)} }
+.acard{display:flex;flex-direction:column;padding:0;overflow:hidden;cursor:pointer;
+  aspect-ratio:1/1;border:0;background:var(--blue-tint);
+  transition:background .12s,color .12s}
+.acimg{flex:1 1 auto;min-height:0;width:100%;object-fit:cover;display:block;
+  background:var(--blue-tint2)}
+/* 名前欄の高さは全カードで固定。中身の量で変えると、
+   学科を入れていない人のところだけ水色の帯がずれて、並びが崩れる。 */
+.acard .ainfo{flex:0 0 auto;height:54px;padding:8px 11px;overflow:hidden}
+.acard .an{display:flex;align-items:center;gap:5px}
+.acard .ann{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.acard .ame,.acard .adum{margin-left:0;flex:0 0 auto}
+.acard .ad{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acard:hover{background:var(--ink);color:var(--paper)}
+.acard:hover .ad{color:rgba(255,255,255,.85)}
+.acard:hover .am span{background:rgba(255,255,255,.2);color:var(--paper)}
+.acard.on{background:var(--ink);color:var(--paper)}
+.acard.on .ad{color:rgba(255,255,255,.85)}
+.acard.on .am span{background:rgba(255,255,255,.2);color:var(--paper)}
+.acard:hover .adum,.acard.on .adum{background:rgba(255,255,255,.2);color:var(--paper)}
+.aav{width:56px;height:56px;object-fit:cover;background:var(--blue-tint2);display:block}
+.aav.big{width:96px;height:96px}
+.an{font-size:15px;font-weight:700;line-height:1.4}
+.ame{font-size:11px;background:var(--orange);color:var(--text);padding:1px 6px;margin-left:6px;
+  vertical-align:2px;font-weight:700}
+.adum{font-size:11px;background:var(--orange-tint2);color:var(--ink);padding:1px 6px;
+  margin-left:6px;vertical-align:2px}
+.ad{font-size:12px;color:var(--sub);margin-top:3px}
+.am{margin-top:7px;display:flex;gap:4px;flex-wrap:wrap}
+.am span{font-size:11px;background:var(--orange-tint);color:var(--ink);padding:2px 8px}
+.aw{grid-column:1/-1;display:flex;gap:4px;margin-top:11px}
+.aw img{width:calc(33.3% - 3px);aspect-ratio:1;object-fit:cover;display:block}
+
+/* 開いたときの1枚。<dialog> の中に入れて、画面の中央に浮かせる。
+   一覧の下に差し込むのをやめた理由は people.js に書いてある。 */
+.amodal{border:0;padding:0;background:var(--paper);color:var(--text);
+  width:min(940px, calc(100vw - 48px));max-height:min(86vh, 900px);
+  /* このページの reset が * に margin:0 を当てているので、
+     dialog 既定の margin:auto が消えて左上に貼り付く。ここで戻す。 */
+  margin:auto;
+  /* 中身だけをスクロールさせる。dialog 自体をスクロールさせると、
+     閉じるボタンが一緒に流れていく。 */
+  overflow:hidden}
+/* dialog は閉じているとき display:none になるが、それはブラウザ既定の指定なので、
+   ここで素の .amodal に display:flex と書くと勝ってしまい、
+   閉じたあとも中身がページ末尾に居座る（下に半分だけ残って見える）。
+   flex は開いているときだけに限定する。 */
+.amodal:not([open]){display:none}
+.amodal[open]{display:flex;flex-direction:column}
+.ambody{overflow:auto;overscroll-behavior:contain;flex:1 1 auto;min-height:0}
+.amodal::backdrop{background:rgba(9,63,180,.42)}
+/* 開くときだけ、ごく短く。長いと「待たされている」に変わる。 */
+@keyframes amIn{from{opacity:0;transform:translateY(10px) scale(.985)}
+                  to{opacity:1;transform:none}}
+@keyframes amBd{from{opacity:0} to{opacity:1}}
+.amodal[open]{animation:amIn .16s cubic-bezier(.2,.7,.3,1)}
+.amodal[open]::backdrop{animation:amBd .16s ease}
+@media(prefers-reduced-motion:reduce){
+  .amodal[open],.amodal[open]::backdrop{animation:none}
+}
+/* 閉じるボタン。青い帯の上に載るので、文字は白。 */
+.amx{position:absolute;top:12px;right:12px;z-index:3;
+  width:38px;height:38px;border:0;border-radius:50%;cursor:pointer;
+  background:rgba(255,255,255,.2);color:var(--paper);font-size:22px;line-height:1;
+  transition:background .12s}
+.amx:hover{background:var(--paper);color:var(--ink)}
+.amodal .adetail{margin:0}
+/* 右上の×のぶんだけ、青い帯の中身を左に寄せる。
+   でないとフォローするボタンに×が重なる。 */
+.amodal .ahead{padding-right:62px}
+.amodal .asec,.amodal .agal{padding-left:22px;padding-right:22px}
+.amodal .asec:last-child{padding-bottom:26px}
+/* 戻ってきた場所を一瞬だけ示す。どこを見ていたか見失わないように。 */
+@keyframes aBack{0%{background:var(--orange-tint)}100%{background:var(--blue-tint)}}
+.acard.back{animation:aBack 1.2s ease}
+.acard:focus-visible{outline:2px solid var(--ink-press);outline-offset:2px}
+@media(max-width:700px){
+  /* 狭いときは下から出るシートにする。中央に小さく浮くより指が届く。 */
+  .amodal{width:100vw;max-width:100vw;max-height:92vh;
+    margin:auto auto 0;border-radius:10px 10px 0 0}
+  @keyframes amIn{from{opacity:0;transform:translateY(28px)} to{opacity:1;transform:none}}
+  .amodal .ahead{grid-template-columns:1fr;gap:12px}
+  .amodal .asec,.amodal .agal{padding-left:15px;padding-right:15px}
+}
+
+.adetail{margin:0;border:0;background:var(--paper)}
+.ahead{display:grid;grid-template-columns:96px 1fr auto;gap:18px;align-items:start;
+  background:var(--ink);color:var(--paper);padding:20px 22px;border:0}
+.ahead h3{font-size:22px;font-weight:700;letter-spacing:.02em}
+.ahead .ad{color:rgba(255,255,255,.85)}
+.ahead .am span{background:rgba(255,255,255,.18);color:var(--paper)}
+.ahead .adum{background:rgba(255,255,255,.2);color:var(--paper)}
+.aacts{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.ahead .btn{border-color:var(--paper);color:var(--paper);background:transparent}
+.ahead .btn:hover{background:var(--paper);color:var(--ink)}
+/* 青地にオレンジの文字は 3.26:1 しかなく読みにくい。
+   面をオレンジで塗って、文字は黒にする（5.35:1）。 */
+.ahead .btn.o{border-color:var(--orange);background:var(--orange);color:var(--text)}
+.ahead .btn.o:hover{background:var(--paper);border-color:var(--paper);color:var(--ink)}
+.asec{margin-top:20px;padding:0 2px}
+.asec h4{font-size:11px;letter-spacing:.18em;color:var(--ink);font-weight:800;margin-bottom:8px}
+.asec p{font-size:13px;line-height:1.9}
+/* プロフィール文。見出しを付けずに、開いていちばん最初に読ませる。 */
+.abio{font-size:14px;line-height:2}
+/* SNSは「線で囲んだ文字」ではなく、面のあるチップにする。 */
+.asns{display:flex;gap:8px;flex-wrap:wrap}
+.sn{display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:700;
+  padding:8px 15px;text-decoration:none;
+  background:var(--blue-tint);color:var(--ink);transition:background .13s,color .13s}
+.sn:hover{background:var(--ink);color:#fff}
+.sn b{font-weight:700;text-transform:uppercase;font-size:11px;letter-spacing:.06em;opacity:.7}
+.sn:hover b{opacity:.85}
+.snx{font-size:11.5px;opacity:.6}
+.agal{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.agal.small{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}
+.agal img{width:100%;aspect-ratio:1;object-fit:cover;display:block}
+.agal figcaption{font-size:12px;margin-top:5px;color:var(--sub)}
+.agal figcaption span{color:var(--faint);font-size:11px}
+.agal .wt{width:100%;margin-top:4px;font-size:11.5px;padding:4px 6px;border:1px solid var(--rule)}
+.agal .wdel{font-size:11px;color:var(--faint);border:0;background:none;cursor:pointer;
+  text-decoration:underline;margin-top:2px}
+.anote{font-size:11.5px;color:var(--faint);line-height:1.8;margin-top:7px}
+.adetail.edit .af{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.adetail.edit label{font-size:11.5px;color:var(--faint);display:block}
+.adetail.edit label.afull{display:block;margin-bottom:12px}
+.adetail.edit input,.adetail.edit select,.adetail.edit textarea{display:block;margin-top:3px;
+  font-family:inherit;font-size:13px;color:var(--ink);border:1px solid var(--rule);
+  border-radius:2px;padding:5px 8px;background:var(--paper)}
+.adetail.edit textarea{width:100%;min-height:54px;resize:vertical;line-height:1.7}
+.adetail.edit .afull input{width:100%}
+.acheck{display:flex!important;gap:6px;align-items:center;font-size:13px!important;
+  color:var(--ink)!important;margin:12px 0}
+.acheck input{margin:0!important}
+
+
+/* ══════ 掲示板系（展示・講評・譲り合い・公募） ══════ */
+.bhead{display:flex;justify-content:space-between;gap:20px;align-items:flex-start;flex-wrap:wrap;
+  padding-bottom:14px;border-bottom:1px solid var(--rule);margin-bottom:14px}
+.bhead h2{font-size:24px;font-weight:700;letter-spacing:.02em}
+.bhead p{font-size:13px;color:var(--sub);line-height:1.8;margin-top:4px;max-width:620px}
+.bfilt{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+.bfilt .fl{font-size:11px;letter-spacing:.18em;color:var(--faint);font-weight:800;
+  margin:0 2px 0 8px}
+.bfilt .fl:first-child{margin-left:0}
+.bcnt{margin-left:auto;font-size:11.5px;color:var(--faint)}
+.blist{display:grid;gap:9px}
+.bitem{display:grid;grid-template-columns:82px 1fr auto;gap:12px;padding:13px 15px;
+  border:0;background:var(--blue-tint);border-radius:3px;align-items:start;
+  transition:background .12s}
+.bitem[data-open]:hover{background:var(--blue-tint2)}
+.btag{font-size:11px;font-weight:700;padding:2px 7px;border-radius:2px;text-align:center;
+  white-space:nowrap;letter-spacing:.03em}
+/* 濃い青と濃いオレンジを「対」で使う。
+   譲り合い: ゆずる=青（出す側） / ほしい=オレンジ（求める側）
+   展示・講評: 開催中=青（いま起きている） / これから=オレンジ（これから来る）
+   終わったものだけ面を持たせず、文字だけにして沈める。 */
+.btag.live{background:var(--ink);color:var(--paper)}
+.btag.soon{background:var(--orange);color:var(--text)}
+.btag.past{background:none;color:var(--faint);box-shadow:inset 0 0 0 1px var(--rule)}
+.bh{font-size:14px;font-weight:700;line-height:1.45}
+.bs{font-size:11.5px;color:var(--sub);margin-top:2px}
+.bm{font-size:11.5px;color:var(--faint);margin-top:3px;font-variant-numeric:tabular-nums}
+.bb{font-size:13px;line-height:1.8;margin-top:6px;white-space:pre-line}
+/* 下線1本のリンクではなく、押せる面にする。 */
+.bu{display:inline-block;margin-top:8px;font-size:11.5px;font-weight:700;
+  color:var(--ink);background:var(--paper);padding:5px 11px;text-decoration:none;
+  transition:background .12s,color .12s}
+.bu:hover{background:var(--ink);color:var(--paper)}
+.bact{display:flex;flex-direction:column;gap:4px}
+.bact button{font-size:11.5px;color:var(--faint);border:1px solid var(--rule);background:none;
+  padding:2px 8px;border-radius:2px;cursor:pointer;white-space:nowrap}
+.bact button:hover{color:var(--orange);border-color:var(--orange)}
+.bform{border:1px solid var(--ink);background:var(--paper);padding:15px 17px;margin-bottom:16px;
+  display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.bform label{font-size:11.5px;color:var(--faint);display:block}
+.bform label i{font-style:normal;color:var(--orange);font-size:11px}
+.bform label.bfull{width:100%}
+.bform input,.bform select,.bform textarea{display:block;margin-top:3px;font-family:inherit;
+  font-size:13px;color:var(--ink);border:1px solid var(--rule);border-radius:2px;
+  padding:5px 8px;background:var(--paper)}
+.bform textarea{width:100%;min-height:52px;resize:vertical;line-height:1.7}
+.bcheck{display:flex!important;gap:6px;align-items:center;font-size:13px!important;
+  color:var(--ink)!important}
+.bcheck input{margin:0!important}
+.bsave{width:100%}
+.bnote{font-size:11.5px;color:var(--faint);line-height:1.85;margin-top:12px}
+/* 写真つきの投稿。写真は札のとなりに1枚だけ入る */
+.bitem.haspic{grid-template-columns:82px 96px 1fr auto}
+.bpic{width:96px;height:96px;object-fit:cover;border-radius:var(--r-sm);background:var(--face);
+  display:block}
+/* 開いたときの詳細 */
+.bitem[data-open]{cursor:pointer}
+.bitem.open{background:var(--blue-tint2);box-shadow:inset 3px 0 0 var(--ink)}
+/* 開いたときの中身は白い面で抜く。同じ薄い青を重ねると境目が分からない。 */
+.bdet{grid-column:1/-1;display:flex;gap:16px;margin-top:12px;padding:14px 15px;
+  border:0;background:var(--paper);flex-wrap:wrap}
+.bdpic{width:210px;flex:0 0 210px;aspect-ratio:1;object-fit:cover;border-radius:3px}
+.bdbody{flex:1;min-width:220px}
+.bdbody dl{display:grid;grid-template-columns:76px 1fr;gap:5px 12px;font-size:13px;
+  line-height:1.8;margin:0}
+.bdbody dt{color:var(--faint);font-size:11.5px;padding-top:2px}
+.bdbody dd{margin:0}
+.bdtxt{font-size:13px;line-height:1.95;margin-top:11px;white-space:pre-line}
+/* 譲り合いのやりとりについて。ここだけは残す。
+   「このサイトで連絡が取れる」と思われたまま待たれるほうが困る。 */
+.bdnote{font-size:11.5px;color:var(--sub);line-height:1.8;margin-top:10px}
+.bdacts{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.bdacts .btn{font-size:13px;padding:6px 14px}
+@media(max-width:700px){ .bdpic{width:100%;flex:0 0 auto;aspect-ratio:16/10} }
+
+.bpicwrap{width:100%;display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+  padding-top:4px;border-top:1px dashed var(--rule);margin-top:2px}
+.bprev{width:64px;height:64px;object-fit:cover;border-radius:2px;border:1px solid var(--rule)}
+.bpicnote{font-size:11px;color:var(--faint);line-height:1.7}
+@media(max-width:700px){
+  .bitem{grid-template-columns:1fr;gap:6px}
+  .bitem.haspic{grid-template-columns:1fr}
+  .bpic{width:100%;height:170px}
+  .bact{flex-direction:row}
+}
+
+
+
+/* ══════ ログイン（コード方式）══════ */
+/* 6桁は大きく、1文字ずつ離して出す。打ち間違いに気づけるように */
+.acode{font-size:26px!important;letter-spacing:.42em;text-align:center;
+  font-variant-numeric:tabular-nums;padding:10px 8px 10px 18px!important;
+  max-width:260px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+.aoff{margin:0 0 16px;padding:11px 15px;background:var(--orange-tint);border:0;box-shadow:inset 3px 0 0 var(--orange);
+  border-radius:3px;font-size:13px;line-height:1.85;color:var(--ink)}
+.aoff b{color:var(--text)}
+
+/* ログイン。ボタン1つだけの画面なので、余白で見せる */
+.alogin{max-width:560px;margin:0 auto;padding:56px 0 40px;text-align:center}
+/* ログインは所属の下。境目が分かるよう、上に間を空ける。 */
+.asub{padding-top:30px;box-shadow:inset 0 1px 0 var(--rule)}
+.asub p{font-size:13px;color:var(--sub);margin-bottom:16px}
+.alogin h2{font-size:26px;font-weight:700;
+  letter-spacing:.06em;margin-bottom:12px}
+.alead{font-size:14px;color:var(--sub);line-height:2;margin-bottom:30px}
+/* GEIDAY について等。素のリンクが折り返して2行に割れていた。
+   面のチップにして、折り返しても形が崩れないようにする。 */
+/* 2行に分けて中央に置く。横に並べると幅で折り返す位置が変わり、
+   画面幅ごとに1行になったり2行になったりして落ち着かない。 */
+.afine{display:flex;flex-direction:column;align-items:center;gap:7px}
+.afine .lnk{display:inline-block;background:var(--blue-tint);color:var(--ink);
+  border:0;padding:8px 14px;margin:3px;font-size:12.5px;font-weight:700;
+  text-decoration:none;cursor:pointer;border-radius:2px;
+  transition:background .12s,color .12s;white-space:nowrap}
+.afine .lnk:hover{background:var(--ink);color:var(--paper)}
+.afine{font-size:11.5px;color:var(--faint);line-height:1.95;margin-top:26px}
+.afine .lnk{font-size:11.5px}
+.alogin .aoff{text-align:left}
+.alogin .docbody{text-align:left;margin-top:20px}
+@media(max-width:820px){ .alogin{padding:34px 0 30px} .alogin h2{font-size:22px} }
+
+.agoogle{margin:4px 0 18px}
+.gbtn{display:inline-flex;align-items:center;gap:11px;padding:11px 22px;
+  border:1px solid var(--rule);border-radius:3px;background:var(--paper);
+  font-size:14px;font-weight:700;color:var(--ink);text-decoration:none;
+  box-shadow:0 1px 2px rgba(0,0,0,.06);transition:border-color .12s,box-shadow .12s}
+.gbtn:hover{border-color:var(--ink);box-shadow:0 2px 6px rgba(0,0,0,.10)}
+.ghint{font-size:11.5px;color:var(--sub);line-height:1.85;margin-top:9px}
+.asep{display:flex;align-items:center;gap:12px;margin:22px 0 16px;
+  color:var(--faint);font-size:11.5px;letter-spacing:.06em}
+.asep:before,.asep:after{content:"";flex:1;height:1px;background:var(--rule)}
+
+/* 運営に連絡するフォーム */
+.cform{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}
+.cform label{font-size:11.5px;color:var(--faint);display:block;flex:1;min-width:200px}
+.cform label.cfull{width:100%;flex:0 0 100%}
+.cform input,.cform textarea{display:block;width:100%;margin-top:3px;font-family:inherit;
+  font-size:13px;color:var(--text);border:1px solid var(--rule);border-radius:2px;
+  padding:7px 9px;background:var(--paper)}
+.cform textarea{min-height:96px;resize:vertical;line-height:1.8}
+
+/* ══════ 記事タブ ══════ */
+/* 教員一覧と同じく、横1列で積む。カードを並べるより、
+   タイトルの頭が縦に揃って一覧として読みやすい。 */
+.arlist{margin-top:22px;border-top:1px solid var(--rule)}
+.arrow2{display:grid;grid-template-columns:78px 1fr auto 22px;gap:18px;align-items:center;
+  padding:18px 14px;border-bottom:1px solid var(--rule);text-decoration:none;
+  transition:background .12s}
+.arrow2:hover{background:var(--hover)}
+/* 見出しの図。写真は持っていないので、記事の種類が分かる形を青で描く */
+.arthumb{width:78px;height:78px;display:grid;place-items:center;border-radius:var(--r-sm);
+  background:var(--blue-tint);overflow:hidden}
+.arrow2:hover .arthumb{background:var(--paper)}
+/* 写真がある記事は、面いっぱいに写真を敷く。角の丸みは箱側で切る。 */
+.arthumb.pic{background:none}
+.arthumb img{width:100%;height:100%;object-fit:cover;display:block}
+.arthumb svg{width:46px;height:46px;fill:none;stroke:var(--ink);stroke-width:2.4;
+  stroke-linecap:round;stroke-linejoin:round}
+.arthumb svg .o{stroke:var(--orange)}
+.arthumb svg .of{fill:var(--orange);stroke:none}
+.arthumb svg .w{stroke:var(--paper)}
+.arthumb svg .wf{fill:var(--paper);stroke:none}
+.arbody{display:block;min-width:0}
+.arttl{display:block;font-size:17px;font-weight:700;line-height:1.55;color:var(--text)}
+.armeta{display:block;font-size:11.5px;color:var(--faint);margin-top:5px;
+  font-variant-numeric:tabular-nums}
+.artag{font-size:11px;font-weight:700;letter-spacing:.08em;padding:4px 12px;
+  border-radius:var(--r-pill);background:var(--ink);color:var(--paper);white-space:nowrap}
+.argo{font-size:17px;color:var(--ink);opacity:.45;transition:opacity .12s,transform .12s}
+.arrow2:hover .argo{opacity:1;transform:translateX(3px)}
+/* 薄いオレンジの全幅パネルは、ほかの4つ（.ttwarn .aoff .apurpose）が
+   みな左に3pxの帯を持ち角丸3px。ここだけ帯なし・角丸8pxで浮いていた。 */
+.arask{display:flex;align-items:center;justify-content:space-between;gap:18px;
+  flex-wrap:wrap;margin-top:30px;padding:24px 26px;background:var(--orange-tint);
+  box-shadow:inset 3px 0 0 var(--orange);border-radius:3px}
+.arask h3{font-size:15px;margin-bottom:4px}
+.arask p{font-size:13px;color:var(--sub);line-height:1.8}
+@media(max-width:700px){
+  .arrow2{grid-template-columns:56px 1fr;gap:12px;padding:14px 4px}
+  .arthumb{width:56px;height:56px} .arthumb svg{width:34px;height:34px}
+  .artag{grid-column:2;justify-self:start} .argo{display:none}
+  .arttl{font-size:15px}
+}
+
+/* ══════ 留学タブ ══════ */
+.rysec{margin-top:30px}
+.rysec>h3{font-size:17px;font-weight:700;letter-spacing:.02em;
+  padding-bottom:7px;border-bottom:1.5px solid var(--ink);margin-bottom:13px}
+.rysub{font-size:11.5px;letter-spacing:.14em;color:var(--faint);font-weight:800;
+  margin:20px 0 8px}
+.rygrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.rycard{border:1px solid var(--rule);background:var(--paper);padding:15px 17px;border-radius:3px}
+.rycard h4{font-size:15px;margin-bottom:4px}
+.rylead{font-size:13px;color:var(--sub);line-height:1.75;margin-bottom:10px}
+.rycard dl{display:grid;grid-template-columns:78px 1fr;gap:4px 10px;font-size:13px;
+  line-height:1.7;border-top:1px solid var(--rule);padding-top:9px}
+.rycard dt{color:var(--faint);font-size:11.5px;padding-top:2px}
+.rycard dd{margin:0}
+.rynote{font-size:11.5px;color:var(--sub);line-height:1.8;margin-top:10px;
+  padding-left:9px;border-left:2px solid var(--orange)}
+.rybars{margin:4px 0 20px}
+.rybar{display:grid;grid-template-columns:78px 1fr 34px;gap:9px;align-items:center;
+  font-size:11.5px;padding:2px 0}
+.ryba{color:var(--sub)}
+.rybb{height:8px;background:var(--face);border-radius:1px;overflow:hidden}
+.rybb i{display:block;height:100%;background:var(--orange)}
+.rybn{text-align:right;font-variant-numeric:tabular-nums;color:var(--ink);font-weight:700}
+.ryarea{margin-bottom:15px}
+.ryarea h4{font-size:13px;letter-spacing:.1em;color:var(--ink);margin-bottom:5px}
+.ryarea h4 span{color:var(--orange);font-variant-numeric:tabular-nums}
+.ryrow{display:grid;grid-template-columns:82px 1fr;gap:10px;font-size:11.5px;
+  line-height:1.85;padding:4px 0;border-bottom:1px dashed var(--rule)}
+.ryc{color:var(--faint)}
+@media(max-width:820px){
+  .rygrid{grid-template-columns:1fr}
+  .ryrow{grid-template-columns:1fr;gap:1px}
+  .rycard dl{grid-template-columns:70px 1fr}
+}
+
+/* 出すときに、まず展示か公募かを選ぶ。項目が丸ごと入れ替わるので、
+   フォームの一番上に置いて、他の入力欄と間を空ける。 */
+.bkind{display:flex;gap:6px;margin-bottom:16px;padding-bottom:14px;
+  box-shadow:inset 0 -1px 0 var(--rule)}
+
+/* ══════ 所属（アカウントタブ） ══════
+   ヘッダのセレクトを外したので、所属を決めるのはここだけ。
+   就活タブと同じく、青い面の上に置いて「ここが操作の場所だ」と分かるようにする。 */
+/* 所属。ここを選べば、ログインしなくても使える。
+   だから画面のいちばん上に置いて、ログインはその下の任意の手続きにする。 */
+.mesec{background:var(--ink);color:var(--paper);padding:24px;margin:0 0 34px;text-align:center}
+/* プロフィールの見出しも同じ青い面にする。
+   チェックは面の中に置く。外に出すと、プロフィール画像の丸に重なっていた。 */
+.pprof{display:flex;align-items:center;justify-content:space-between;gap:16px;
+  flex-wrap:wrap;margin-bottom:20px}
+.pprof .menow{margin-bottom:0}
+.pprof .pshow{background:var(--orange);color:var(--text);flex:0 0 auto}
+.pprof .pshow:hover{background:var(--paper);color:var(--ink)}
+.menow{display:block;font-size:22px;font-weight:700;letter-spacing:.03em;line-height:1.3;
+  margin-bottom:14px}
+/* 3つを1行ずつ、中央に積む。横に並べると幅で折り返す位置が変わり、
+   2つ＋1つのような半端な段になって落ち着かない。 */
+.merow{display:flex;flex-direction:column;align-items:center;gap:8px}
+.merow select{padding:10px 30px;border:0;background-color:var(--paper);
+  color:var(--text);font-size:14px;cursor:pointer;
+  width:min(420px,100%);text-align:center;
+  appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'><path d='M1 1l4 4 4-4' fill='none' stroke='%23093FB4' stroke-width='1.8' stroke-linecap='round'/></svg>");
+  background-repeat:no-repeat;background-position:right 11px center;
+  transition:background-color .12s}
+.merow select:hover{background-color:var(--blue-tint)}
+@media(max-width:820px){
+  .mesec{padding:16px 15px 15px}
+  .menow{font-size:17px}
+  .merow{flex-direction:column} .merow select{width:100%}
+}
+
+/* ══════ 年度が変わったときの1枚 ══════
+   ふだんは出ない。4月に1回だけ出て、押したら消える。 */
+.ndbox{background:var(--ink);color:var(--paper);padding:18px 22px 20px;margin-bottom:18px}
+.ndt{font-size:19px;font-weight:700;letter-spacing:.02em;margin-bottom:6px}
+.ndbox p{font-size:13px;line-height:1.85;opacity:.92;max-width:64ch}
+.ndbox b{background:var(--orange);color:var(--text);padding:1px 7px;font-weight:700}
+.ndbtns{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+.ndbox .btn{border-color:var(--paper);color:var(--paper);background:transparent}
+.ndbox .btn:hover{background:var(--paper);color:var(--ink)}
+.ndbox .btn.o{border-color:var(--orange);color:var(--orange)}
+.ndbox .btn.o:hover{background:var(--orange);color:var(--text)}
+.ndrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px;align-items:center}
+.ndrow select,.ndrow input{font-size:13px;padding:7px 10px;border:1px solid rgba(255,255,255,.4);
+  background:rgba(255,255,255,.12);color:var(--paper);border-radius:var(--r-sm)}
+.ndrow input{flex:1;min-width:200px}
+.ndrow input::placeholder{color:rgba(255,255,255,.6)}
+.ndrow select option{color:var(--text);background:#fff}
+.ndbox .lnk{color:var(--paper);opacity:.7;margin-top:10px;font-size:12px}
+
+/* ══════ 就活 ══════
+   5つの区分に、6色のうち5色をあてる。灰色も緑も使わない。
+   就職＝青／非常勤・自営＝オレンジ／進学＝薄い青／留学＝薄いオレンジ／
+   未定・他＝白（青の細枠）。この5色だけで全部の図をまかなう。 */
+.skseg.job  {background:var(--ink)}
+.skseg.free {background:var(--orange)}
+.skseg.grad {background:var(--blue-tint2)}
+.skseg.abr  {background:var(--orange-tint2)}
+.skseg.undec{background:var(--paper);box-shadow:inset 0 0 0 1px var(--rule)}
+
+/* いちばん上。ここは面で殴る。細い線は1本も使わない。 */
+.skhero{background:var(--ink);color:var(--paper);padding:26px 28px 28px;margin-bottom:8px}
+.skhl{display:flex;align-items:baseline;gap:12px;margin-bottom:20px}
+.skhy{font-size:13px;letter-spacing:.18em;opacity:.8}
+.skhl b{font-size:52px;font-weight:700;line-height:.92;
+  font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.skhu{font-size:15px;opacity:.9}
+.skhcards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.skhc{padding:16px 16px 17px;display:flex;flex-direction:column;gap:2px}
+.skhc.job {background:var(--paper);color:var(--ink)}
+.skhc.free{background:var(--orange);color:var(--text)}
+.skhc.grad{background:var(--blue-tint);color:var(--ink)}
+.skhc.rest{background:rgba(255,255,255,.14);color:var(--paper)}
+.skhcp{font-size:38px;font-weight:700;line-height:1;letter-spacing:-.01em;
+  font-variant-numeric:tabular-nums}
+.skhcp i{font-size:17px;font-style:normal;margin-left:2px}
+.skhct{font-size:14px;font-weight:700;letter-spacing:.06em;margin-top:6px}
+.skhcn{font-size:13px;font-variant-numeric:tabular-nums;opacity:.85}
+.skhcs{font-size:11.5px;line-height:1.7;opacity:.75;margin-top:4px}
+
+/* 5年ぶんの帯 */
+.sklg{display:flex;gap:16px;flex-wrap:wrap;margin:2px 0 14px;font-size:12px;color:var(--sub)}
+.sklgi{display:inline-flex;align-items:center;gap:6px}
+.sklgi i{width:18px;height:13px;display:inline-block;flex:0 0 18px}
+.skyears{display:flex;flex-direction:column;gap:10px}
+.skyear{background:var(--paper)}
+.skyh{display:flex;align-items:baseline;gap:9px;margin-bottom:5px}
+.skyy{font-size:17px;font-weight:700;color:var(--ink);
+  font-variant-numeric:tabular-nums}
+.skyy i{font-size:11px;font-style:normal;margin-left:3px;color:var(--faint)}
+.skyn{font-size:12px;color:var(--faint);font-variant-numeric:tabular-nums}
+.skband{display:flex;height:38px;overflow:hidden}
+.skseg{display:grid;place-items:center;min-width:0;transition:filter .12s}
+.skseg:hover{filter:brightness(.92)}
+.skseg b{font-size:12.5px;font-weight:700;font-variant-numeric:tabular-nums}
+.skseg.job b,.skseg.free b{color:var(--paper)}
+.skseg.free b{color:var(--text)}
+.skseg.grad b,.skseg.abr b,.skseg.undec b{color:var(--ink)}
+
+.skpick{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 14px}
+.sklead{font-size:13px;color:var(--sub);line-height:1.8;margin:0 0 10px}
+
+/* 就職先の社名。1社1面。並べると「ここに行けるのか」が量で伝わる。 */
+.skemp{display:flex;flex-wrap:wrap;gap:6px}
+.skec{background:var(--blue-tint);color:var(--ink);font-size:12.5px;
+  padding:7px 12px;display:inline-flex;align-items:center;gap:7px;
+  transition:background .12s,color .12s}
+.skec:hover{background:var(--ink);color:var(--paper)}
+.skec.many{background:var(--orange);color:var(--text)}
+.skec.many:hover{background:var(--ink);color:var(--paper)}
+.skec i{font-style:normal;font-size:11px;font-weight:700;
+  background:rgba(0,0,0,.14);padding:1px 6px;border-radius:var(--r-pill)}
+@media(max-width:820px){
+  .skhero{padding:18px 16px 20px}
+  .skhl b{font-size:40px}
+  .skhcards{grid-template-columns:1fr 1fr}
+  .skhcp{font-size:30px}
+  .skband{height:32px}
+  .skseg b{font-size:11px}
+}
+
+/* ══════ 予約状況 ══════ */
+.rpick{display:flex;gap:5px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+/* 施設を選ぶボタン。枠線をやめて面にする。
+   選んでいるものはオレンジの面＋黒文字（5.35:1）。白文字だと 3.26:1 で読めない。 */
+/* 機材はセレクトで選ぶ。ボタン15個を並べるのはやめた。 */
+.rsel{width:100%;max-width:460px;padding:11px 34px 11px 13px;border:0;
+  background-color:var(--blue-tint);color:var(--ink);font-size:14px;font-weight:700;
+  cursor:pointer;appearance:none;-webkit-appearance:none;border-radius:2px;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='11' height='7' viewBox='0 0 10 7'><path d='M1 1l4 4 4-4' fill='none' stroke='%23093FB4' stroke-width='1.8' stroke-linecap='round'/></svg>");
+  background-repeat:no-repeat;background-position:right 12px center;
+  transition:background-color .12s}
+.rsel:hover{background-color:var(--blue-tint2)}
+.rpick{margin-bottom:14px}
+/* 絞り込みのセレクト。掲示板・アーティスト共通。
+   ボタンを何個も並べるより、1本にまとめたほうが行が増えない。 */
+.fsel{padding:9px 30px 9px 12px;border:0;background-color:var(--blue-tint);
+  color:var(--ink);font-size:13px;font-weight:700;cursor:pointer;border-radius:2px;
+  appearance:none;-webkit-appearance:none;max-width:100%;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'><path d='M1 1l4 4 4-4' fill='none' stroke='%23093FB4' stroke-width='1.8' stroke-linecap='round'/></svg>");
+  background-repeat:no-repeat;background-position:right 11px center;
+  transition:background-color .12s}
+.fsel:hover{background-color:var(--blue-tint2)}
+.rbtn{font-size:12px;padding:6px 12px;border:0;background:var(--blue-tint);
+  border-radius:2px;cursor:pointer;color:var(--ink);display:inline-flex;gap:7px;align-items:center;
+  transition:background .12s,color .12s}
+.rbtn:hover{background:var(--ink);color:var(--paper)}
+.rbtn.on{background:var(--orange);color:var(--text);font-weight:700}
+.rbtn.on:hover{background:var(--ink);color:var(--paper)}
+.rtag{font-size:11px;padding:1px 6px;border:0;border-radius:2px;
+  background:rgba(0,0,0,.09);opacity:1}
+.rbtn:hover .rtag,.rbtn.on:hover .rtag{background:rgba(255,255,255,.22)}
+.rsep{width:100%;height:1px;background:var(--rule);margin:4px 0}
+.rframe{position:relative;border:1px solid var(--rule);background:var(--paper);
+  height:min(78vh,900px);min-height:520px}
+.rframe iframe{width:100%;height:100%;border:0;display:block}
+.spin{width:13px;height:13px;border:2px solid var(--rule);border-top-color:var(--orange);
+  border-radius:50%;animation:sp .8s linear infinite;margin-right:8px;display:inline-block}
+@keyframes sp{to{transform:rotate(360deg)}}
+.rload{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-size:13px;color:var(--faint);background:var(--paper);pointer-events:none;text-align:center;
+  padding:0 20px}
+.rlink{margin-top:22px;padding-top:14px;border-top:1px solid var(--rule)}
+.rlink h4{font-size:11px;letter-spacing:.18em;color:var(--faint);font-weight:800;margin-bottom:6px}
+.rl{display:flex;gap:10px;align-items:baseline;padding:5px 0;flex-wrap:wrap}
+/* 下線1本のリンクではなく、押せる面にする（記事タブの .arsns と同じ作り）。 */
+.rl a{font-size:13px;color:var(--ink);text-decoration:none;font-weight:700;
+  background:var(--blue-tint);padding:5px 12px;display:inline-block;
+  transition:background .12s,color .12s}
+.rl a:hover{background:var(--ink);color:var(--paper)}
+.rw{font-size:11px;color:var(--faint);font-family:SFMono-Regular,Menlo,monospace}
+
+
+/* ══════ アカウント ══════ */
+.aform{display:flex;gap:14px;flex-wrap:wrap;margin:4px 0 14px;max-width:660px}
+.aform label{font-size:11.5px;color:var(--faint);display:block}
+.aform input,.aform select{display:block;margin-top:3px;font-family:inherit;font-size:13px;
+  color:var(--ink);border:1px solid var(--rule);border-radius:2px;padding:7px 9px;
+  background:var(--paper);min-width:210px}
+.ahint{display:block;margin-top:3px;font-size:11px;color:var(--faint)}
+.apurpose{border:0;box-shadow:inset 3px 0 0 var(--orange);background:var(--orange-tint);padding:12px 16px;border-radius:var(--r-sm);
+  font-size:11.5px;line-height:1.95;margin-bottom:14px;max-width:820px}
+.apurpose b{color:var(--ink)}
+.agree{display:flex;gap:8px;align-items:flex-start;font-size:13px;margin-bottom:14px;
+  cursor:pointer;line-height:1.7}
+.agree input{margin-top:3px}
+.lnk{border:0;background:none;color:var(--orange);text-decoration:underline;cursor:pointer;
+  font:inherit;padding:0}
+.acard2{border:1px solid var(--rule);background:var(--paper);border-radius:3px;
+  padding:4px 16px;max-width:560px;margin-bottom:14px}
+.arow{display:grid;grid-template-columns:150px 1fr;gap:10px;padding:9px 0;font-size:13px;
+  border-bottom:1px solid var(--rule)}
+.arow:last-child{border-bottom:0}
+.arow span{color:var(--faint);font-size:11.5px}
+.docs{margin-top:20px;display:flex;flex-direction:column;align-items:center;gap:7px}
+.docbody{margin-top:14px;border:1px solid var(--rule);background:var(--paper);border-radius:3px;
+  padding:20px 24px;max-width:820px;max-height:60vh;overflow-y:auto}
+.docbody h4{font-size:17px;font-weight:700;letter-spacing:.02em;
+  margin-bottom:2px}
+.docbody .tdate{font-size:11.5px;color:var(--faint);margin-bottom:14px}
+.docbody h5{font-size:13px;margin:16px 0 5px;color:var(--orange);letter-spacing:.03em}
+.docbody p{font-size:13px;line-height:1.95;margin-bottom:7px}
+.docbody ul{margin:0 0 8px 18px;font-size:13px;line-height:1.95}
+.docbody b{font-weight:700}
+
+
+/* ══════ プロフィール編集（アカウント内） ══════ */
+.okmail{font-size:11px;color:var(--text);background:var(--orange);border:0;padding:1px 7px;
+  margin-left:7px;vertical-align:1px;font-weight:700}
+.psec{margin-top:22px;padding-top:16px;border-top:1px solid var(--rule)}
+.psec h3{font-size:17px;font-weight:700;letter-spacing:.02em}
+.phead{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap}
+/* ここを押してもらえないとアーティスト欄が埋まらないので、
+   薄い色ではなく塗りにして、画面の中で見落とせない濃さにする。 */
+.pshow{display:flex;gap:9px;align-items:center;font-size:14px;font-weight:700;cursor:pointer;
+  border:0;background:var(--orange);color:var(--text);padding:11px 18px;border-radius:2px;
+  transition:background .12s,color .12s}
+.pshow:hover{background:var(--ink);color:var(--paper)}
+.pshow input{width:17px;height:17px;accent-color:var(--ink)}
+.pshow input{margin:0}
+.pnote{font-size:11.5px;color:var(--sub);line-height:1.85;margin:6px 0 14px;max-width:720px}
+.pgrid{display:grid;grid-template-columns:170px 1fr;gap:20px;align-items:start;max-width:860px}
+.pav{text-align:center}
+.pav img{width:120px;height:120px;border-radius:50%;object-fit:cover;background:var(--rule);
+  display:block;margin:0 auto 9px}
+.pbtn{display:inline-block;font-size:12px;border:0;background:var(--blue-tint);
+  color:var(--ink);padding:6px 13px;border-radius:2px;cursor:pointer;
+  transition:background .12s,color .12s}
+.pbtn:hover{background:var(--ink);color:var(--paper)}
+.plink{border:0;background:none;color:var(--faint);font-size:11.5px;text-decoration:underline;
+  cursor:pointer;display:block;margin:5px auto 0}
+.phint{font-size:11px;color:var(--faint);line-height:1.7;margin-top:7px}
+.pfields label{display:block;font-size:11.5px;color:var(--faint);margin-bottom:11px;position:relative}
+.pfields input,.pfields textarea{display:block;width:100%;margin-top:3px;font-family:inherit;
+  font-size:13px;color:var(--ink);border:1px solid var(--rule);border-radius:2px;padding:7px 9px;
+  background:var(--paper)}
+.pfields textarea{min-height:62px;resize:vertical;line-height:1.75}
+.pcount{position:absolute;right:2px;bottom:-14px;font-size:11px;color:var(--faint);
+  font-variant-numeric:tabular-nums}
+/* 所属。ほかの入力欄と同じ見た目にして、3つを1行に収める。
+   学年だけは「3年」で足りるので、列を細くして学科に幅を回す。 */
+.pme{display:grid;grid-template-columns:1fr 1fr .62fr;gap:10px}
+/* 「グローバルアートプラクティス」のような長い専攻名で列が押し広げられて
+   横スクロールが出ないように、最小幅を切っておく。 */
+.pme label,.pme select{min-width:0}
+.pme select{display:block;width:100%;margin-top:3px;font-family:inherit;
+  font-size:13px;color:var(--ink);border:1px solid var(--rule);border-radius:2px;
+  padding:7px 26px 7px 9px;background-color:var(--paper);cursor:pointer;
+  appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'><path d='M1 1l4 4 4-4' fill='none' stroke='%23093FB4' stroke-width='1.8' stroke-linecap='round'/></svg>");
+  background-repeat:no-repeat;background-position:right 9px center;
+  transition:background-color .12s}
+.pme select:hover{background-color:var(--blue-tint)}
+.psns{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.pworks{margin-top:18px;max-width:860px}
+.pwh{font-size:11px;letter-spacing:.18em;color:var(--faint);font-weight:800;margin-bottom:8px}
+.pwh span{letter-spacing:0;font-weight:400}
+.pwgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:11px}
+.pwgrid img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:2px;display:block}
+.pwt{width:100%;margin-top:4px;font-size:11.5px;padding:4px 6px;border:1px solid var(--rule);
+  border-radius:2px;font-family:inherit}
+.pwadd{display:flex;align-items:center;justify-content:center;aspect-ratio:1;
+  border:0;background:var(--blue-tint);border-radius:2px;cursor:pointer;font-size:13px;
+  color:var(--ink);transition:background .12s,color .12s}
+.pwadd:hover{background:var(--ink);color:var(--paper)}
+/* 「消す」と「保存する」が縦に接していて、押し間違える近さだった。
+   作品の下と、保存の行の上に、指1本ぶんの間を取る。 */
+.pwdel{margin-top:6px}
+.pworks + .aacts{margin-top:26px;padding-top:20px;border-top:1px solid var(--rule)}
+.psaved{font-size:11.5px;color:var(--orange);margin-left:10px}
+.dtab{width:100%;border-collapse:collapse;font-size:11.5px;max-width:920px}
+.dtab th{text-align:left;font-size:11px;letter-spacing:.16em;color:var(--faint);
+  padding:0 8px 6px 0;font-weight:800;border-bottom:1px solid var(--rule)}
+.dtab td{padding:7px 8px 7px 0;border-bottom:1px solid var(--rule);vertical-align:top}
+.dtab .num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;width:70px}
+.dtab .dk{display:block;font-size:11px;color:var(--faint);font-family:SFMono-Regular,Menlo,monospace}
+.dtab .dsample{font-size:11px;color:var(--sub);font-family:SFMono-Regular,Menlo,monospace;
+  word-break:break-all;line-height:1.6}
+.dtab tr.zero td{opacity:.42}
+.dtab tr.dsum td{border-bottom:0;font-weight:700;padding-top:9px}
+@media(max-width:820px){
+  .pgrid{grid-template-columns:1fr}
+  .dtab .dsample{display:none}
+}
+
+
+/* ══════ 押した手ごたえ（トースト・処理中・保存状態） ══════ */
+.gtoast{position:fixed;left:50%;bottom:28px;transform:translate(-50%,14px);z-index:200;
+  background:var(--ink);color:var(--paper);font-size:13px;padding:10px 18px;border-radius:3px;
+  box-shadow:0 6px 22px rgba(9,63,180,.20);opacity:0;pointer-events:none;
+  transition:opacity .18s,transform .18s;max-width:82vw;text-align:center;line-height:1.6}
+.gtoast.show{opacity:1;transform:translate(-50%,0)}
+.gtoast.err{background:var(--orange);color:var(--text)}
+.isbusy{opacity:.75;pointer-events:none;display:inline-flex;align-items:center;justify-content:center}
+.psaved{font-size:11.5px;margin-left:10px}
+.psaved.ok{color:var(--faint)}
+.psaved.dirty{color:var(--orange);font-weight:700}
+.pcount.over{color:var(--orange);font-weight:700}
+.pbtn.isbusy,.pwadd.isbusy{border-style:solid}
+.empty{padding:56px 0;text-align:center;color:var(--faint);font-size:14px;line-height:2}
+.more{margin:24px auto 0;display:block;padding:10px 28px;border:1px solid var(--ink);
+  background:transparent;font-size:13px;cursor:pointer;letter-spacing:.1em}
+.more:hover{background:var(--ink);color:var(--paper)}
+footer{max-width:1600px;margin:0 auto;padding:0 32px 60px;font-size:11.5px;
+  color:var(--faint);line-height:1.95}
+footer b{color:var(--sub)}
+
+@media(max-width:820px){
+  .hrow{padding:12px 14px 0;gap:10px} main{padding:16px 14px 70px}
+  .tabs{padding:8px 0 0}
+  /* タブが12個ある。折り返すと画面の1/3を食うので、1行の横スクロールにする */
+  .tabs{padding:8px 0 0;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
+  .tabs::-webkit-scrollbar{display:none}
+  .tabs::before,.tabs::after{content:"";flex:0 0 14px}
+  .tab{padding:8px 12px;flex:0 0 auto;scroll-snap-align:start;white-space:nowrap}
+  .hrow{padding:11px 15px 4px;gap:10px}
+  .brand{gap:11px} .gmarkwrap{width:42px;flex:0 0 42px}
+  /* 狭いときは横に並べきれないので、タグラインだけ下の段に落とす */
+  .gword{font-size:28px;letter-spacing:.03em}
+  .brand small{font-size:11.5px;letter-spacing:.18em;margin-top:4px}
+  .hsns a{width:38px;height:38px}
+  /* 中央寄せの長い文は「出ま／す。」のように割れて読みにくい */
+  .empty{text-align:left;padding:34px 4px}
+  /* 入れ子のスクロールをやめて、そのまま流す */
+  .docbody{max-height:none;padding:16px 16px}
+  .aform{gap:10px} .aform input,.aform select{min-width:0;width:100%}
+  .aform label{width:100%}
+  /* 「10:30」は34pxの列に11pxでは入らない。列を広げ、時刻だけ小さくする。
+     数字を等幅にして、どの時刻でも同じ幅で収まるようにする。 */
+  .grid th.ph{width:46px;font-size:11px;padding:8px 2px;letter-spacing:0}
+  .grid th.ph i{font-size:9.5px;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+  .cell{height:64px}
+  .slot .st{font-size:11px;-webkit-line-clamp:2} .slot .sm{display:none}
+  li.row{grid-template-columns:26px 1fr;gap:9px}
+  .right{grid-column:2;text-align:left;margin-top:5px;display:flex;gap:10px;align-items:center}
+  .rate{margin-top:0} .detail{grid-column:1/-1}
+  .sum{margin-left:0;width:100%}
+}
+
+@media(max-width:820px){
+  /* ══════ iPhone：1画面に3〜4件を出す ══════
+     ここまでは1件が 226〜321px あって、画面に2件しか入っていなかった。
+     スマホは「並んでいるものを見比べる」道具なので、
+     1件の高さを詰めることが、機能を足すより効く。
+     消すのではなく、**開いたときに出す**へ移す。 */
+
+  /* 帯。ロゴは残すが、スマホでは占有を減らす */
+  .hrow{padding:9px 15px 2px}
+  .gword{font-size:24px} .brand small{font-size:10.5px;margin-top:3px}
+  .gmarkwrap{width:34px;flex:0 0 34px}
+  .hsns a{width:34px;height:34px}
+  /* 狭い帯ではロゴを押し出さないよう、ログインは一回り小さく */
+  .hlogin{font-size:12.5px;padding:8px 13px;margin-right:4px;letter-spacing:.05em}
+  .tab{padding:7px 11px;font-size:13px}
+
+  /* 見出しとリード文。リード文は畳む（見出しだけで足りる） */
+  .bhead{padding-bottom:9px;margin-bottom:10px;gap:9px}
+  .bhead h2{font-size:19px}
+  .bhead>div>p{display:none}
+  .bfilt,.abar{gap:5px;margin-bottom:10px}
+  .tbtn{font-size:11.5px;padding:5px 9px}
+
+  /* ── 教員：フルネームが並ぶだけにする ──
+     経歴の1行と区分チップで236pxあった。名前と科目数だけなら80px。 */
+  /* 教員。スマホの li.row（星26px＋本文）の列指定が効いてしまい、
+     氏名が1文字ずつ縦に折れていた。教員の行は自前の列を持たせる。 */
+  li.trow{grid-template-columns:1fr auto!important;padding:9px 0;gap:10px;align-items:center}
+  .ti{font-size:15px;line-height:1.35;white-space:nowrap;
+    overflow:hidden;text-overflow:ellipsis}
+  .tbio1{display:none}                 /* 経歴は開いたら出る */
+  /* 区分は1行だけ。3行に折り返ると1件で200px使う */
+  .trow .mt{margin-top:3px;font-size:11px;display:flex;gap:4px;flex-wrap:nowrap;
+    overflow:hidden;white-space:nowrap}
+  .trow .mt .dot,.trow .mt{color:var(--faint)}
+  .kchip{font-size:10.5px;padding:1px 6px;flex:0 0 auto}
+  .trow .right{grid-column:2;grid-row:1;margin-top:0;display:flex;
+    align-items:baseline;gap:2px;white-space:nowrap}
+  .cn{font-size:17px} .cu{font-size:10px}
+
+  /* ── 掲示板（展示・講評／公募／譲り合い）──
+     本文と補足で321pxあった。写真・題・1行の要約だけにする。 */
+  /* 写真が無い板（公募）で62pxの空き列を作らない */
+  .bitem{grid-template-columns:1fr;gap:7px;padding:10px 11px}
+  .bitem.haspic{grid-template-columns:62px 1fr;gap:9px}
+  .bpic{width:62px;height:62px;grid-row:span 2}
+  .bitem:not(.haspic) .btag{grid-column:1}
+  .bitem:not(.haspic) .bmain{grid-column:1}
+  /* 長い題名・長い締切表記で1件が400px超えになっていた。行数で止める。 */
+  .bh{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .bs{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+  .bm{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+  .btag{grid-column:2;justify-self:start;font-size:10.5px;padding:1px 6px}
+  .bh{font-size:14px;line-height:1.35}
+  .bs{font-size:11.5px}
+  .bm{font-size:11px}
+  .bb{display:none}                    /* ひとことは開いたら出る */
+  .bu{display:none}                    /* 公式ページも開いてから */
+  .bitem .adum{font-size:10px}
+
+  /* ── アーティスト：正方形タイルを2列 ── */
+  .agrid{grid-template-columns:repeat(2,1fr);gap:8px}
+  .acard .ainfo{height:48px;padding:7px 9px}
+  .an{font-size:13px}
+  .ad{font-size:11px;margin-top:2px}
+  .ame,.adum{font-size:10px}
+  /* 所属の選択。3つを1行に保ったまま、狭いぶんだけ詰める */
+  .mesec{padding:20px 16px}
+  .menow{font-size:18px}
+  .pme{gap:6px}
+  .pme label{font-size:10.5px}
+  .pme select{font-size:12px;padding:7px 20px 7px 7px;background-position:right 6px center}
+
+  /* ── さがす：判定バッジを行内に収める ── */
+  li.row{padding:10px 0 11px}
+  .ti{font-size:15px}
+  /* お気に入り★。見た目はそのまま、指の当たり判定だけ44px相当に広げる */
+  .fav{padding:10px 8px;margin:-10px -8px}
+  /* 教員の担当科目。190pxの区分列は375pxでは科目名を潰すので畳む */
+  .tcrow{grid-template-columns:46px 1fr 44px}
+  .tck{display:none}
+
+  /* ── 出典。画面の頭ではなく、いちばん下に置く ── */
+  /* 地図の住所と出典。画面のいちばん上にある必要がない。
+     ここが3行あると、地図そのものが下に押し出される。 */
+  .mcsrc{display:none}
+  .msrc{order:99}
+
+  /* ══════ iOS：入力欄をタップしても勝手に拡大させない ══════
+     iOS Safari は、フォーカスした入力欄の文字が16px未満だと
+     画面ごと拡大する。拡大は戻せないまま右側が見切れる。
+     入力・選択の文字を16pxにするだけで起きなくなる。 */
+  input,select,textarea{font-size:16px!important}
+  /* さがすの絞り込み。6個のセレクトを折り返さず横1本に流す。
+     指で払えば全部に届くので、4行に積むより浅い。 */
+  .bar{margin-bottom:8px}
+  .filts{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;
+    -webkit-overflow-scrolling:touch;padding-bottom:2px}
+  .filts::-webkit-scrollbar{display:none}
+  .filts select{flex:0 0 auto}
+  #q{width:100%}
+  .bar select,.merow select,.rsel,.ttg,#tq,.bform input,.bform select,.bform textarea,
+  .aform input,.aform select,.cform input,.cform textarea,
+  .adetail.edit input,.adetail.edit select,.adetail.edit textarea{font-size:16px!important}
+}
+
+/* ══════ 起動のひとこま ══════
+   全面を青にして、オレンジの線が中央から左右へ引かれ、その上下に
+   名前とタグラインがせり上がる。線を引く動きそのものが「可視化する」。
+
+   尺は1.74秒。本編は1.45秒で見え始める。根拠：
+     ・Locomotive の実コードは setTimeout(resolve,1200)
+     ・Android の Splash Screen API は1000ms以内を推奨
+     ・スプラッシュは1.5秒以下なら「速い」、2秒超で12%が離脱
+   一方で「藝大を、可視化する。」10字を読むには静止が0.5秒要る。
+   動いている最中の文字は読めないので、この0.5秒は削れない。
+   上限と下限が重なる帯が1.7秒前後。
+
+   transform と opacity しか使っていない。この2つは合成スレッドで走るので、
+   8.7MB のパースがメインスレッドを止めている間もコマ落ちしない。 */
+:root{ --gd-e-out:cubic-bezier(.16,1,.3,1); --gd-e-io:cubic-bezier(.65,0,.35,1) }
+.gd-intro{position:fixed;inset:0;z-index:2147483000;
+  display:none;align-items:center;justify-content:center;
+  background:var(--ink);will-change:transform;
+  transition:transform .42s var(--gd-e-io) .12s}
+html.gd-play{background:var(--ink)}
+html.gd-play .gd-intro{display:flex}
+.gd-inner{display:flex;flex-direction:column;align-items:center;
+  width:100%;padding:0 24px;will-change:transform,opacity;
+  transition:transform .42s var(--gd-e-io) .12s, opacity .26s linear .26s}
+.gd-bird{display:block;width:clamp(34px,7.4vw,54px);height:auto;
+  margin-bottom:clamp(18px,3.4vw,26px);
+  animation:gdFade .62s var(--gd-e-out) .08s both}
+/* せり上がりを見せるための窓。padding は y のディセンダを切らないため */
+.gd-mask{display:block;overflow:hidden;padding:.12em 0 .24em}
+.gd-word{display:block;font-family:Karla,"Helvetica Neue",Arial,sans-serif;
+  font-weight:700;color:var(--paper);
+  font-size:clamp(56px,19vw,132px);line-height:.92;letter-spacing:-.02em;
+  animation:gdRise .72s var(--gd-e-out) .16s both}
+/* margin-right の負値は、字間.18em が最後の「。」の後ろにも付いて
+   光学的に左へずれるぶんの打ち消し。消すと中心がずれる。 */
+.gd-sub{display:block;
+  font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Noto Sans JP",sans-serif;
+  font-weight:700;color:var(--paper);
+  font-size:clamp(20px,6.2vw,30px);line-height:1.2;
+  letter-spacing:.18em;margin-right:-.18em;
+  animation:gdRise .72s var(--gd-e-out) .32s both}
+.gd-rule{width:min(78vw,480px);height:2px;margin:clamp(16px,3vw,24px) 0;overflow:hidden}
+.gd-rule i{display:block;width:100%;height:100%;background:var(--orange);
+  transform:scaleX(1);transform-origin:50% 50%;
+  animation:gdDraw .56s var(--gd-e-out) both;
+  transition:transform .26s var(--gd-e-io)}
+@keyframes gdRise{from{transform:translateY(calc(100% + .34em))}to{transform:translateY(0)}}
+@keyframes gdDraw{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes gdFade{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+/* 退けは、来た道を戻さずそのまま上へ抜く。戻すと「やり直し」に見える。 */
+.gd-intro.gd-out{transform:translateY(-101%);pointer-events:none}
+.gd-intro.gd-out .gd-inner{transform:translateY(12vh);opacity:0}
+.gd-intro.gd-out .gd-rule i{animation:none;transform:scaleX(0)}
+/* 飛ばしたとき。カーテンではなく素直に消す。
+   .gd-out と詳細度が同じなので、必ずこの順で書く。 */
+.gd-intro.gd-fast{transform:none;opacity:0;transition:opacity .2s linear}
+.gd-intro.gd-fast .gd-inner{transform:none;opacity:0;transition:opacity .16s linear}
+.gd-intro.gd-fast .gd-rule i{transition-duration:.16s}
+@media (prefers-reduced-motion:reduce){
+  html.gd-play{background:none}
+  html.gd-play .gd-intro{display:none}
+}
+
+</style>
+<script>
+/* このセッションで既に見たか、動きを減らす設定かを、描画前に決める。
+   body 側でやると2回目に青がフラッシュする。 */
+(function(){
+  try{ if(sessionStorage.getItem('gd_intro')==='1') return;
+       sessionStorage.setItem('gd_intro','1'); }catch(e){}
+  if(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  document.documentElement.className += ' gd-play';
+})();
+</script>
+<link rel="stylesheet" href="glass.css">
+</head>
+<body>
+
+<div class="gd-intro" id="gdIntro" aria-hidden="true">
+  <div class="gd-inner">
+    <img class="gd-bird" id="gdBird" alt="">
+    <div class="gd-mask"><span class="gd-word">Geiday</span></div>
+    <div class="gd-rule"><i></i></div>
+    <div class="gd-mask"><span class="gd-sub">藝大を、可視化する。</span></div>
+  </div>
+</div>
+<script>
+/* DOMContentLoaded を待たない。待つと 8.7MB のパース完了まで始まらず、
+   イントロが読み込みを遅らせる側に回る。 */
+(function(){
+  var root=document.documentElement, intro=document.getElementById('gdIntro');
+  if(!intro || root.className.indexOf('gd-play')<0) return;
+  var timer, done=false;
+  function finish(){ if(done) return; done=true; clearTimeout(timer);
+    root.className=root.className.replace(/\s*gd-play/,''); intro.remove(); }
+  function leave(fast){
+    if(done||intro.classList.contains('gd-out')) return;
+    clearTimeout(timer);
+    if(fast) intro.classList.add('gd-fast');
+    intro.classList.add('gd-out');
+    timer=setTimeout(finish, fast?240:620);
+  }
+  /* 鳥のマークは logo.js が読み込まれてから入る。間に合わなければ出さない
+     （中央寄せなので、無くても組みは崩れない）。 */
+  var tries=0, bird=document.getElementById('gdBird');
+  (function mark(){
+    if(done) return;
+    if(typeof GEIDAY_MARK==='string'){
+      var m=GEIDAY_MARK.match(/src="([^"]+)"/);
+      if(m&&bird) bird.src=m[1];
+      return;
+    }
+    if(++tries<40) setTimeout(mark,25); else if(bird) bird.remove();
+  })();
+  timer=setTimeout(function(){ leave(false); }, 1200);
+  setTimeout(finish, 4000);                    // 保険。何があっても4秒で解除
+  addEventListener('pointerdown', function(){ leave(true); }, {once:true,passive:true});
+  addEventListener('keydown',     function(){ leave(true); }, {once:true});
+})();
+</script>
+
+<header>
+  <div class="hrow">
+    <div class="brand" id="brand">
+      <span class="gmarkwrap" id="gmark"></span>
+      <span class="btxt"><span class="gword">Geiday</span>
+        <small>藝大を、可視化する。</small></span>
+    </div>
+    <div class="hsns">
+      <!-- ログインしていない人にだけ出す。入っている人には何も出さない。
+           JS が hidden を外すので、初期状態は隠しておく。 -->
+      <button class="hlogin" id="hlogin" hidden>ログイン</button>
+      <a href="https://x.com/geiday_" target="_blank" rel="noopener noreferrer"
+         title="X" aria-label="X">
+        <svg viewBox="0 0 24 24" width="23" height="23" fill="currentColor" aria-hidden="true">
+          <path d="M18.9 2H22l-7 8 8.2 12h-6.4l-5-7.3L5.9 22H2.8l7.5-8.6L2.4 2h6.6l4.5 6.7L18.9 2Zm-1.1 18h1.7L7.3 3.8H5.5L17.8 20Z"/>
+        </svg></a>
+      <a href="https://www.instagram.com/geiday_/" target="_blank" rel="noopener noreferrer"
+         title="Instagram" aria-label="Instagram">
+        <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor"
+             stroke-width="1.9" aria-hidden="true">
+          <rect x="2.8" y="2.8" width="18.4" height="18.4" rx="5.2"/>
+          <circle cx="12" cy="12" r="4.1"/>
+          <circle cx="17.6" cy="6.4" r="1.15" fill="currentColor" stroke="none"/>
+        </svg></a>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab on" data-p="find">さがす</button>
+    <button class="tab" data-p="tt">時間割</button>
+    <button class="tab" data-p="map">校内地図</button>
+    <button class="tab" data-p="tea">教員</button>
+    <button class="tab" data-p="art">アーティスト</button>
+    <button class="tab" data-p="rs">予約</button>
+    <button class="tab" data-p="ex">展示・講評</button>
+    <button class="tab" data-p="kb">公募</button>
+    <button class="tab" data-p="gv">譲り合い</button>
+    <button class="tab" data-p="ry">留学</button>
+    <button class="tab" data-p="sk">就活</button>
+    <button class="tab" data-p="ar">記事</button>
+    <button class="tab" data-p="acc">アカウント</button>
+  </div>
+</header>
+
+
+<main>
+  <!-- 所属を選ばないと、履修判定も履修率も出ない。このサイトの半分が動かない。
+       だから最初に一度だけ、いちばん上でうながす。 -->
+  <!-- 年度が変わったときだけ出る。ふだんは何も無い。 -->
+  <div id="nendo" style="display:none"></div>
+  <!-- ─── 時間割 ─── -->
+  <section class="pane" id="p-tt">
+    <div class="ttbar">
+      <select id="ttgrade" class="ttg"></select>
+      <div class="seg" id="termseg">
+        <button data-t="前期" class="on">前期</button><button data-t="後期">後期</button>
+      </div>
+      <!-- お気に入りは、それだけでタブを1つ使うほどの量ではない。
+           時間割の隣に置くと「入れる候補を見る → 表に入れる」が1画面で終わる。 -->
+      <div class="seg" id="ttview">
+        <button data-v="tt" class="on">表</button><button data-v="fav">お気に入り</button>
+      </div>
+      <div class="sum">
+        <span><b id="sumcr">0</b> 単位</span>
+        <span><b id="sumn">0</b> コマ</span>
+      </div>
+    </div>
+    <div id="ttwrap">
+      <table class="grid"><thead><tr id="ghead"></tr></thead><tbody id="gbody"></tbody></table>
+      <div class="other" id="otherwrap"></div>
+      <div id="pickwrap"></div>
+    </div>
+    <div id="favwrap" style="display:none">
+      <div class="favbar" id="favbar"></div>
+      <ol id="favlist"></ol>
+    </div>
+  </section>
+
+  <!-- ─── さがす ─── -->
+  <section class="pane on" id="p-find">
+    <!-- スマホで4行になっていた。検索とセレクトを分けて、
+         セレクトは横1本に流す（はみ出したら横スクロール）。 -->
+    <div class="bar">
+      <input id="q" placeholder="講義名・教員名・講義コードで検索">
+    </div>
+    <div class="bar filts">
+      <select id="fyear"></select><select id="fkubun"></select>
+      <select id="fterm"></select><select id="fday"></select>
+      <select id="fcampus"></select><select id="fsort"></select>
+    </div>
+    <div class="count" id="count"></div>
+    <ol id="list"></ol>
+    <button class="more" id="more">さらに表示</button>
+  </section>
+
+  <!-- ─── 教員 ─── -->
+  <section class="pane" id="p-tea">
+    <div class="bar">
+      <input id="tq" placeholder="検索">
+      <select id="tsort"><option value="n">担当科目が多い順</option><option value="name">名前順</option></select>
+    </div>
+    <div class="count" id="tcount"></div>
+    <ol id="tlist"></ol>
+    <button class="more" id="tmore" style="display:none"></button>
+    <div class="tfoot">出どころ：担当科目は東京藝術大学 CampusPlan 公開シラバスの担当教員欄（2022〜2026年度）、
+      経歴は researchmap の公開プロフィール。大学の公式教員一覧が各教員から researchmap へ
+      リンクしているので、その先をそのまま出しています。
+      経歴が出ない人は、公開されているものが見つからなかった人です。書き足していません。
+      評価や人物についての書き込みは置きません。</div>
+  </section>
+
+  <!-- ─── アーティスト ─── -->
+  <section class="pane" id="p-art"></section>
+
+  <section class="pane" id="p-acc"></section>
+  <section class="pane" id="p-rs"></section>
+  <section class="pane" id="p-ex"></section>
+  <section class="pane" id="p-kb"></section>
+  <section class="pane" id="p-gv"></section>
+  <section class="pane" id="p-ry"></section>
+  <section class="pane" id="p-sk"></section>
+  <section class="pane" id="p-ar"></section>
+
+  <!-- ─── 校内地図 ─── -->
+  <section class="pane" id="p-map">
+    <div class="mcamp" id="mcamp"></div>
+    <div class="maplayout">
+      <aside class="mside">
+        <div class="msh">建物 / BUILDINGS</div>
+        <div class="mfilt" id="mfilt"></div>
+        <div id="mlist"></div>
+      </aside>
+      <div id="mstage">
+        <canvas id="mcv"></canvas>
+        <div id="mlabels"></div>
+        <div id="mhud">
+          <button data-v="iso">俯瞰</button><button data-v="top">真上</button
+          ><button data-v="south">南から</button><button data-v="gate">正門</button
+          ><button id="mrot">回転</button><button id="mzin">＋</button
+          ><button id="mzout">−</button><button id="mreset">戻す</button>
+          <!-- 指で触る端末に「ホイール」「Shift＋ドラッグ」と書いても嘘になる -->
+          <div class="mhint" id="mhint"></div>
+        </div>
+      </div>
+      <aside id="mpanel"></aside>
+    </div>
+
+  </section>
+</main>
+
+<!-- 出どころの表記は、全部のページの下に置かない。
+     中身は「GEIDAY について」と「利用規約」に全部入っている。
+     毎日使う画面に毎回出す種類の情報ではない。
+     取得日だけは中で使うので、隠した要素で持っておく。 -->
+<span id="fetched" hidden></span>
+
+<script src="logo.js"></script>
+<script src="juken_data.js"></script>
+<script src="nav.js"></script>
+<script src="api.js"></script>
+<script src="sync.js"></script>
+<script src="dummy.js"></script>
+<script src="places.js"></script>
+<script src="rooms.js"></script>
+<script src="campuses.js"></script>
+<script src="boardposts.js"></script>
+<script src="map.js"></script>
+<script src="teachers.js"></script>
+<script src="artists.js"></script>
+<script src="people.js"></script>
+<script src="boards.js"></script>
+<script src="kobo.js"></script>
+<script src="boardui.js"></script>
+<script src="ryugaku.js"></script>
+<script src="shukatsu_data.js"></script>
+<script src="shukatsu.js"></script>
+<script src="nendo.js"></script>
+<script src="bios.js"></script>
+<script src="articles.js"></script>
+<script src="reserve.js"></script>
+<script src="auth.js"></script>
+<script>
+/* ══════════ 定数 ══════════ */
+const ALLDAYS = ["月","火","水","木","金","土"];
+let DAYS = ["月","火","水","木","金"];   // 実データに土曜があるときだけ増やす
+const PERIODS = [1,2,3,4,5,6];
+const PTIME = {1:"8:50",2:"10:30",3:"13:00",4:"14:40",5:"16:20",6:"18:00"};
+/* 藝大は美術学部だけではない。音楽学部・映像研究科・国際芸術創造研究科の
+   授業も公開シラバスに載っている（2026年度で音楽系だけで約2000件）。
+   ここを美術学部だけにしていると、音楽の学生が開いたとき
+   自分の授業が1件も出てこない。 */
+const FACULTIES = ["", "美術学部", "美術研究科", "音楽学部", "音楽研究科",
+                   "映像研究科", "国際芸術創造研究科"];
+const DEPTS = ["", "デザイン","日本画","油画","彫刻","工芸","建築","先端芸術表現",
+               "芸術学","文化財保存学","美術教育","美術解剖学","グローバルアートプラクティス",
+               "作曲","声楽","ピアノ","オルガン","弦楽","管打楽","古楽","指揮",
+               "邦楽","音楽学","音楽教育","音楽環境創造","音楽音響創造","音楽文芸",
+               "映画","メディア映像","アニメーション","ゲーム",
+               "アートマネジメント","キュレーション","リサーチ"];
+/* 大学院生も使う。数字だけだと学部生しか選べない。 */
+const GRADES = ["", "1","2","3","4","M1","M2","D1","D2","D3"];
+const gname = g => /^[1-4]$/.test(String(g)) ? g+"年" : String(g);
+const EASE = ["", "かなり大変", "大変", "ふつう", "楽なほう", "かなり楽"];
+const TAGS = ["出席きびしい","出席ゆるい","課題多い","課題少ない","レポートのみ","試験あり",
+              "制作が中心","講評がよい","毎回楽しい","話が面白い"];
+const KIND_LABEL = {
+  NOT_OFFERED:"開講なし", NOT_OFFERED_FROM:"開講停止", ONLY_DEPT:"学科・専攻の限定",
+  DENY_DEPT:"対象外の学科", ONLY_FACULTY:"学部・研究科の限定", ONLY_GRADE:"学年の限定",
+  DENY_GRADE:"受講不可の学年", MIN_GRADE:"下限学年", REQUIRED:"必修",
+  CAPACITY:"抽選・定員", MUST_ATTEND_FIRST:"初回・ガイダンス必須",
+  AUDIT_ON_REQUEST:"他科聴講は事前相談", NO_AUDIT:"他科聴講不可",
+  NEEDS_PERMISSION:"事前相談・許可", PREREQ:"先行科目あり",
+  PAIR_REQUIRED:"対の科目を両方履修", OTHER:"要確認の記載"
+};
+
+/* ══════════ 保存（localStorage） ══════════ */
+const LS = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch(e){ return d; } };
+const SS = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch(e){} };
+
+let MINE    = LS("geidai_reviews_v2", {});   // {key:[{star,ease,year,tags,body,at,mine,dept,grade}]}
+let FAVS    = LS("geidai_favs_v1", {});      // {key:{at,tags:[]}}
+let TT      = LS("geidai_tt_v1", {});        // {"前期|月-3": key}
+let ME      = LS("geidai_me_v1", {fac:"",dept:"",grade:""});
+let MYREC   = LS("geidai_records_v1", []);   // 自分/知り合いが登録した履修記録
+let USEDUMMY= LS("geidai_dummy_v1", true);   // ダミーを混ぜるか
+
+let DATA=null, shown=40, pane="find", term="前期", picking=null, favTag="";
+let rvDeptOnly=false;                        // 自分の学科の口コミだけ見る
+const state = {year:"2026", kubun:"", term:"", campus:"", day:"", sort:"star", q:""};
+
+/* ── 口コミと履修記録は「自分のぶん」と「ダミー」を混ぜて集計する ──
+   ダミーは見た目の確認用。dummy:true が付いていて、1クリックで消せる。 */
+let REVIEWS = {};      // {key:[review]}
+let RECORDS = [];      // [{dept,grade,year,courses:[key]}]
+function rebuild(){
+  /* サーバに本物が入っていれば、ダミーは混ぜない。
+     本物と作り物が混ざったまま人に見せると、どれが本当か分からなくなる。 */
+  const srvRV  = (typeof SRVDATA!=="undefined") ? SRVDATA.reviews() : [];
+  const srvREC = (typeof SRVDATA!=="undefined") ? SRVDATA.records() : [];
+  const useDum = USEDUMMY && !srvRV.length && !srvREC.length;
+
+  REVIEWS = {};
+  const push = r => { (REVIEWS[r.k] = REVIEWS[r.k] || []).push(r); };
+  if(useDum && typeof DUMMY_REVIEWS!=="undefined") DUMMY_REVIEWS.forEach(push);
+  srvRV.forEach(push);
+  /* 手元にしか無いぶん（まだ送れていないもの）。サーバに同じものがあれば重ねない。 */
+  const seen = new Set(srvRV.map(r=>r.k+"|"+r.at));
+  for(const [k,arr] of Object.entries(MINE))
+    arr.forEach(r=>{ if(!seen.has(k+"|"+r.at)) push({...r,k}); });
+
+  RECORDS = [];
+  if(useDum && typeof DUMMY_RECORDS!=="undefined") RECORDS = RECORDS.concat(DUMMY_RECORDS);
+  RECORDS = RECORDS.concat(srvREC).concat(MYREC)
+                   .concat(typeof autoRecords==='function'?autoRecords():[]);
+}
+/* サーバから新しいものが届いたときに呼ばれる */
+window.__reloadStores = function(){
+  MINE  = LS("geidai_reviews_v2", {});
+  FAVS  = LS("geidai_favs_v1", {});
+  TT    = LS("geidai_tt_v1", {});
+  ME    = LS("geidai_me_v1", {fac:"",dept:"",grade:""});
+  MYREC = LS("geidai_records_v1", []);
+  rebuild();
+  /* courses.json（2.8MB）はまだ届いていないことがある。
+     届いていなければここで止める。届いた側が改めて描き直す。
+     ここを素通りすると DATA が null のまま refresh() に入って毎回例外になり、
+     ログイン済みの端末では boot() が途中で止まっていた。 */
+  if(!DATA) return;
+  if(typeof window.__syncMe==="function") window.__syncMe();
+  else if(typeof refresh==="function") refresh();
+};
+
+const esc = s => String(s==null?"":s).replace(/[&<>"]/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]));
+const key = c => c.year + ":" + c.code;
+const byKey = {};
+
+/* ══════════ 口コミ集計 ══════════ */
+function getR(c){ return REVIEWS[key(c)] || []; }
+function aggOf(rs){
+  if(!rs.length) return null;
+  const avg = rs.reduce((s,r)=>s+r.star,0)/rs.length;
+  const eR = rs.filter(r=>r.ease);
+  const ease = eR.length ? eR.reduce((s,r)=>s+r.ease,0)/eR.length : 0;
+  const tally = {};
+  rs.forEach(r=>(r.tags||[]).forEach(t=>tally[t]=(tally[t]||0)+1));
+  return { n:rs.length, avg, ease,
+           top:Object.entries(tally).sort((a,b)=>b[1]-a[1]).slice(0,3).map(x=>x[0]) };
+}
+function agg(c){ return aggOf(getR(c)); }
+/* 学科ごとの集計。「デザインの人は星いくつを何件つけたか」を見るため */
+function byDept(c){
+  const m = {};
+  for(const r of getR(c)){
+    const d = r.dept || "（学科なし）";
+    (m[d] = m[d] || []).push(r);
+  }
+  return Object.entries(m)
+    .map(([d,rs])=>({dept:d, ...aggOf(rs)}))
+    .sort((a,b)=>b.n-a.n || b.avg-a.avg);
+}
+
+/* ══════════ 先輩の履修記録 ══════════ */
+/* 「デザイン科の1年でこの授業を取っている人が何%か」を出す。
+   母数はその学科・学年で記録を出した人数。少ないときは割合を出さない。 */
+function takeRate(c, dept, grade){
+  if(!dept || !grade) return null;
+  const k = key(c);
+  const pool = RECORDS.filter(r=>r.dept===dept && String(r.grade)===String(grade));
+  if(pool.length < 3) return {few:true, total:pool.length};
+  const n = pool.filter(r=>r.courses.includes(k)).length;
+  return {n, total:pool.length, pct: n/pool.length*100};
+}
+/* その講義を取った人の内訳（学科×学年）。上位だけ返す */
+function takenBy(c){
+  const k = key(c), m = {};
+  for(const r of RECORDS){
+    if(!r.courses.includes(k)) continue;
+    const id = `${r.dept}|${r.grade}`;
+    m[id] = (m[id]||0)+1;
+  }
+  const denom = {};
+  for(const r of RECORDS){ const id=`${r.dept}|${r.grade}`; denom[id]=(denom[id]||0)+1; }
+  return Object.entries(m).map(([id,n])=>{
+    const [dept,grade]=id.split("|");
+    return {dept, grade, n, total:denom[id], pct:n/denom[id]*100};
+  }).sort((a,b)=>b.pct-a.pct || b.n-a.n);
+}
+function starHTML(v){
+  const f = Math.floor(v + .001); let h="";
+  for(let i=1;i<=5;i++) h += `<span class="${i<=f?"":"off"}">★</span>`;
+  return `<span class="stars">${h}</span>`;
+}
+function rateHTML(c){
+  const a = agg(c);
+  if(!a) return "";
+  return `<div class="rate">${starHTML(a.avg)} <span class="num">${a.avg.toFixed(1)}</span>
+    <span>(${a.n})</span></div>`;
+}
+
+/* ══════════ 履修可否の判定 ══════════ */
+function judge(c){
+  const rs = c.restrictions || [];
+  const has = k => rs.filter(r=>r.kind===k);
+  const my = ME.dept, myg = ME.grade, myf = ME.fac;
+
+  for(const r of has("NOT_OFFERED"))
+    if(!r.target || r.target.startsWith(c.year)) return {cls:"no",label:"開講なし",why:r.source};
+  for(const r of has("NOT_OFFERED_FROM")){
+    const y=(r.target.match(/\d{4}/)||[])[0];
+    if(y && Number(c.year)>=Number(y)) return {cls:"no",label:"開講なし",why:r.source};
+  }
+  if(my){
+    for(const r of has("DENY_DEPT"))
+      if(r.target===my) return {cls:"no",label:"履修不可",why:r.source};
+    const od = has("ONLY_DEPT");
+    if(od.length && !od.some(r=>r.target===my))
+      return has("AUDIT_ON_REQUEST").length
+        ? {cls:"check",label:"要相談",why:od[0].source}
+        : {cls:"no",label:"履修不可",why:od[0].source};
+  }
+  if(myf){
+    const of_ = has("ONLY_FACULTY");
+    if(of_.length && !of_.some(r=>myf.includes(r.target)||r.target.includes(myf)))
+      return {cls:"no",label:"履修不可",why:of_[0].source};
+  }
+  if(myg){
+    for(const r of has("DENY_GRADE"))
+      if(r.target.split(",").includes(myg)) return {cls:"no",label:"履修不可",why:r.source};
+    for(const r of has("MIN_GRADE"))
+      if(Number(myg)<Number(r.target)) return {cls:"no",label:"履修不可",why:r.source};
+    const og = has("ONLY_GRADE");
+    if(og.length && !og.some(r=>r.target.split(",").includes(myg)))
+      return {cls:"no",label:"履修不可",why:og[0].source};
+  }
+  /* 単位の扱い。推測で「かも」と書かない。美術学部履修案内 令和8年度（2026）P.4 の
+     「授業科目の区分」に、他科・専攻の専門科目は卒業要件単位にならないと明記がある。 */
+  if(myf==="美術学部" && c.level>=5)
+    return {cls:"warn",label:"大学院の科目",html:true,
+      why:"大学院レベルの科目です（科目レベル"+c.level+"）。美術学部の教育課程表に載っていないため、"+
+          "学部の卒業要件単位としては扱われません。学部の卒業要件は「必修科目（専門・古美術研究）＋"+
+          "選択科目（各科指定科目・共通科目）」の4区分だけで構成されています。"+
+          "（美術学部履修案内 令和8年度 P.2「Ⅰ．卒業要件単位」）"};
+  if(myf==="美術研究科" && c.level<=4 && c.level)
+    return {cls:"warn",label:"学部の科目",html:true,
+      why:""};
+  if(my && c.kubun){
+    const other = DEPTS.slice(1).find(d=>d!==my && c.kubun.startsWith(d));
+    /* 「他科の専門科目は卒業単位にならない」も、根拠は美術学部履修案内。
+       音楽学部などに同じ断定を当てると、根拠のない断定になる。 */
+    if(other && !/美術/.test(myf||"美術学部"))
+      return {cls:"none", label:"他科・他専攻の科目",
+        why:""};
+    if(other) return {cls:"no2",label:"卒業単位にならない",html:true,
+      why:other+"科の専門科目です。履修は認められても、卒業に必要な単位には数えられません。"+
+          "所属科以外で卒業単位にしたいときは、共通科目（教養・外国語・保健体育・専門基礎）が受け皿になります。"};
+  }
+  for(const k of ["OTHER","NEEDS_PERMISSION","PREREQ","PAIR_REQUIRED","CAPACITY",
+                  "MUST_ATTEND_FIRST","AUDIT_ON_REQUEST"]){
+    const a = has(k); if(a.length) return {cls:"check",label:"要確認",why:a[0].source};
+  }
+  /* 共通科目は科の別に関係なく卒業要件に算入される。これは断定してよい。
+     ただし根拠は「美術学部履修案内」なので、断定できるのは美術学部の学生についてだけ。
+     音楽学部の学生に同じ札を出したら、根拠のない断定になる。 */
+  if(my && isCommon(c) && /美術/.test(myf||"美術学部"))
+    return {cls:"ok",label:"卒業単位になる",html:true,
+      why:"共通科目（教養・外国語・保健体育・専門基礎）は、科・専攻を問わず卒業要件に算入されます。"+
+          (REQ[my]?"<br>"+my+"科の卒業要件では、共通科目は "+REQ[my].common+" 単位（合計 "+REQ[my].total+" 単位）です。":"")};
+  if(my && !/美術/.test(myf||"美術学部") && isCommon(c))
+    return {cls:"none", label:"卒業単位は要確認",
+      why:""};
+  return rs.length===0 ? {cls:"none",label:"条件の記載なし",why:""}
+                       : {cls:"ok",label:"履修できます",why:""};
+}
+/* 共通科目＝教養・外国語・保健体育・専門基礎（履修案内 P.4「２．共通科目」） */
+function isCommon(c){
+  const k=c.kubun||"";
+  return /教養|外国語|保健体育|専門基礎/.test(k);
+}
+/* 卒業要件単位（美術学部履修案内 令和8年度 P.2「Ⅰ．卒業要件単位」の表そのまま） */
+const REQ = {
+  "日本画":{senmon:92,kobi:8,shitei:4,common:22,total:126},
+  "油画":{senmon:90,kobi:8,shitei:4,common:22,total:124},
+  "彫刻":{senmon:90,kobi:8,shitei:14,common:12,total:124},
+  "工芸":{senmon:86,kobi:8,shitei:16,common:16,total:126},
+  "デザイン":{senmon:84,kobi:8,shitei:18,common:14,total:124},
+  "建築":{senmon:98,kobi:8,shitei:16,common:14,total:136},
+  "芸術学":{senmon:80,kobi:12,shitei:16,common:20,total:128},
+  "先端芸術表現":{senmon:72,kobi:8,shitei:16,common:24,total:124},
+};
+
+/* ══════════ 時間割 ══════════ */
+/* 1年から4年、さらに院まで使い続けられるように、時間割は学年ごとに持つ。
+   キーに学年を含める。古い形式（学年なし）は「学部1年」として読み替える。 */
+const GRADES_TT=[["b1","学部1年"],["b2","学部2年"],["b3","学部3年"],["b4","学部4年"],
+                 ["m1","修士1年"],["m2","修士2年"],
+                 ["d1","博士1年"],["d2","博士2年"],["d3","博士3年"]];
+/* はじめて開いたときは、アカウントで選んでいる所属の学年に合わせる。
+   「3年」と表示しているのに時間割が「学部1年」なのは、ただの食い違い。 */
+function ttGradeFromMe(){
+  const g=String(ME.grade||"");
+  if(/^[1-4]$/.test(g))   return "b"+g;
+  if(/^M?[12]$/i.test(g)) return "m"+g.replace(/M/i,"");
+  if(/^D[123]$/i.test(g)) return "d"+g.replace(/D/i,"");
+  return "b1";
+}
+let ttGrade = LS("geidai_ttgrade_v1", null) || ttGradeFromMe();
+const ttk = (t,d,p) => `${ttGrade}|${t}|${d}-${p}`;
+function migrateTT(){
+  let ch=false;
+  for(const k of Object.keys(TT)){
+    if(/^(b|m|d)\d\|/.test(k)) continue;
+    TT["b1|"+k]=TT[k]; delete TT[k]; ch=true;
+  }
+  if(ch) SS("geidai_tt_v1",TT);
+}
+const gradeLabel = g => (GRADES_TT.find(x=>x[0]===g)||["","" ])[1];
+/* アカウントの学科と、選んでいる学年から、履修記録を自動で組み立てる。
+   別途「記録として登録する」ボタンは置かない。 */
+function autoRecords(){
+  const dept = (typeof ACC!=="undefined" && ACC && ACC.dept) ? ACC.dept : ME.dept;
+  if(!dept) return [];
+  const out=[];
+  for(const [g,label] of GRADES_TT){
+    const set=new Set();
+    Object.entries(TT).forEach(([k,v])=>{ if(k.startsWith(g+"|")) set.add(v); });
+    if(set.size<3) continue;
+    const m=g.match(/^b(\d)$/);
+    if(!m) continue;                       // 学部の記録だけを統計に使う
+    out.push({dept, grade:Number(m[1]), year:state.year,
+              courses:[...set].sort(), auto:true});
+  }
+  return out;
+}
+function inTerm(c,t){ return c.term===t || c.term==="通年"; }
+function ttCourses(t){
+  const out=[];
+  for(const [k,v] of Object.entries(TT)){
+    if(!k.startsWith(ttGrade+"|"+t+"|")) continue;
+    const c = byKey[v]; if(c) out.push([k,c]);
+  }
+  return out;
+}
+function renderTT(){
+  document.getElementById("ghead").innerHTML =
+    `<th class="ph"></th>` + DAYS.map(d=>`<th>${d}</th>`).join("");
+  document.getElementById("gbody").innerHTML = PERIODS.map(p=>{
+    const tds = DAYS.map(d=>{
+      const k = ttk(term,d,p), v = TT[k], c = v && byKey[v];
+      if(!c) return `<td class="cell"><button class="add" data-d="${d}" data-p="${p}">＋</button></td>`;
+      const j = judge(c), a = agg(c);
+      return `<td class="cell"><div class="slot ${j.cls==="no"?"ng":j.cls==="warn"||j.cls==="check"?"warn":""}"
+          data-k="${esc(v)}">
+        <button class="x" data-rm="${esc(k)}" title="外す">×</button>
+        <div class="st">${esc(c.title)}</div>
+        <div class="sm">${esc(c.teacher||"")}${c.credits?` ／ ${c.credits}単位`:""}
+          ${a?` ／ ★${a.avg.toFixed(1)}`:""}</div>
+      </div></td>`;
+    }).join("");
+    return `<tr><th class="ph">${p}限<i>${PTIME[p]}</i></th>${tds}</tr>`;
+  }).join("");
+
+/* 公開シラバスに曜日が載っているのは 2026年度 1430件中 358件（25%）だけ。
+   しかも載っていないのは実技科目、つまり自分の科の授業ほど出てこない。
+   これを黙っていると「自分の必修が見つからない、このサイトは壊れている」になる。
+   だから、あなたの科で何件が対象外なのかを数字で出す。 */
+/* 曜日が公開されていない科目の断り書きは、普段の画面に出さない。
+   知りたい人は「このサイトについて」の4番に書いてある。 */
+function noDayNote(){ return ""; }
+
+  // 曜日が決まらない科目（集中講義など）はコマに置けない。別枠で持つ。
+  const others = ttCourses(term).filter(([k])=>k.includes("|*"));
+  const anyHere = ttCourses(term).length;
+  document.getElementById("otherwrap").innerHTML = (others.length
+    ? `<h3>曜日が決まっていない科目（集中講義など）</h3><div class="chipline">` +
+      others.map(([k,c])=>`<div class="mini"><span>${esc(c.title)}</span>
+        ${c.credits?`<span style="color:var(--faint)">${c.credits}単位</span>`:""}
+        <button data-rm="${esc(k)}">×</button></div>`).join("") + `</div>` : "")
+    + noDayNote();
+
+  // 合計単位（通年は1回だけ数える）
+  const all = new Set();
+  Object.entries(TT).forEach(([k,v])=>{ if(k.startsWith(ttGrade+"|"+term+"|")) all.add(v); });
+  let cr=0; all.forEach(v=>{ const c=byKey[v]; if(c&&c.credits) cr+=c.credits; });
+  document.getElementById("sumcr").textContent = cr % 1 ? cr.toFixed(1) : cr;
+  document.getElementById("sumn").textContent = all.size;
+  
+
+  document.querySelectorAll(".cell .add").forEach(b=>
+    b.onclick = ()=>openPicker(b.dataset.d, Number(b.dataset.p)));
+  document.querySelectorAll("[data-rm]").forEach(b=>
+    b.onclick = e=>{ e.stopPropagation(); delete TT[b.dataset.rm]; SS("geidai_tt_v1",TT); renderTT(); });
+  document.querySelectorAll(".slot").forEach(s=>
+    s.onclick = ()=>{ const c=byKey[s.dataset.k]; if(!c) return;
+      state.q=c.title; state.day=""; state.kubun=""; state.term="";
+      document.getElementById("q").value=c.title; shown=40; go("find"); refresh(); });
+}
+
+/* 「先輩の記録として残す」ボタンは置かない。
+   ログインしていれば、組んだ時間割がそのまま
+   「その学科・その学年の履修記録」として統計に入る。 */
+function openPicker(d,p){ picking = {d,p,q:"",hideNG:true}; drawPicker(); }
+document.addEventListener("keydown", e=>{
+  if(e.key==="Escape" && picking){ picking=null; drawPicker(); }
+});
+function pickerCands(){
+  const {d,p,q,hideNG} = picking;
+  return DATA.courses.filter(c=>{
+    if(c.year!==state.year) return false;
+    if(c.day!==d || c.period!==p) return false;
+    if(!inTerm(c,term)) return false;
+    if(hideNG && judge(c).cls==="no") return false;
+    if(q){ const s=(c.title+" "+c.teacher+" "+c.kubun).toLowerCase();
+           if(!s.includes(q.toLowerCase())) return false; }
+    return true;
+  }).map(c=>({c, ...recoScore(c)}))
+    .sort((a,b)=>b.score-a.score || a.c.title.localeCompare(b.c.title,"ja"));
+}
+/* ── この枠のおすすめ順 ──────────────────────
+   先輩の履修記録がいちばん強い手がかり。自分と同じ学科・学年の人がどれだけ取ったか、
+   次に学科全体、最後に星。理由を文にして一緒に返す。 */
+function recoScore(c){
+  const k=key(c), reasons=[];
+  let score=0;
+  if(ME.dept && ME.grade){
+    const same=RECORDS.filter(r=>r.dept===ME.dept && String(r.grade)===String(ME.grade));
+    if(same.length>=3){
+      const n=same.filter(r=>r.courses.includes(k)).length;
+      const pct=n/same.length*100;
+      score += pct*3;
+      if(pct>=15) reasons.push({t:`${ME.dept} ${gname(ME.grade)}の <b>${pct.toFixed(0)}%</b> が履修`, w:1});
+    }
+  }
+  if(ME.dept){
+    const dp=RECORDS.filter(r=>r.dept===ME.dept);
+    if(dp.length>=5){
+      const took=dp.filter(r=>r.courses.includes(k));
+      score += (took.length/dp.length*100);
+      /* 学年を全部並べても情報にならない。いちばん多い学年とその割合だけ出す */
+      if(took.length>=3){
+        const byG={}, denG={};
+        dp.forEach(r=>{ denG[r.grade]=(denG[r.grade]||0)+1; });
+        took.forEach(r=>{ byG[r.grade]=(byG[r.grade]||0)+1; });
+        const best=Object.entries(byG)
+          .map(([g,n])=>({g, n, pct:n/(denG[g]||1)*100}))
+          .filter(x=>denG[x.g]>=3)
+          .sort((a,b)=>b.pct-a.pct)[0];
+        if(best && best.pct>=12 && String(best.g)!==String(ME.grade))
+          reasons.push({t:`${ME.dept}科の先輩は <b>${best.g}年</b>で取る人が多い（${best.pct.toFixed(0)}%）`, w:.6});
+      }
+    }
+  }
+  /* この講義をいちばん多く取っている学科 */
+  const tb=takenBy(c);
+  if(tb.length){
+    const top=tb[0];
+    if(top.pct>=25 && (!ME.dept || top.dept!==ME.dept))
+      reasons.push({t:`いちばん多いのは <b>${top.dept}科${top.grade}年</b>（${top.pct.toFixed(0)}%）`, w:.4});
+  }
+  const a=agg(c);
+  if(a){ score += a.avg*8 + Math.min(a.n,20)*0.6;
+    if(a.n>=3) reasons.push({t:`口コミ ${a.n}件で ★${a.avg.toFixed(1)}`, w:.5}); }
+  return {score, reasons:reasons.sort((x,y)=>y.w-x.w).slice(0,2)};
+}
+function drawPicker(){
+  if(!picking){ document.getElementById("pickwrap").innerHTML=""; return; }
+  const {d,p} = picking;
+  const cands = pickerCands();
+  const rows = cands.length ? cands.map(({c,reasons},i)=>{
+    const j=judge(c), a=agg(c);
+    return `<div class="pkitem" data-k="${esc(key(c))}">
+      <div><div class="t"><span class="rk">${i+1}</span>${esc(c.title)}</div>
+        <div class="m">${esc(c.kubun)}${c.teacher?" ／ "+esc(c.teacher):""}
+          ${c.credits?" ／ "+c.credits+"単位":""} ／ ${esc(c.term)}</div>
+        ${reasons.length?`<div class="why">${reasons.map(r=>`<span>${r.t}</span>`).join("")}</div>`:""}</div>
+      ${a?`<div class="right">${starHTML(a.avg)}
+        <span class="num">${a.avg.toFixed(1)}</span> <span>(${a.n})</span></div>`:""}
+      <span class="v ${j.cls}">${j.label}</span>
+    </div>`;
+  }).join("") : `<div class="pkempty">この枠に置ける授業が見つかりませんでした。<br>
+      「履修できないものも表示」を入れると増えることがあります。<br><br>
+      <span style="font-size:11.5px;line-height:1.9">工芸・油画・日本画などの<b>実技科目は、シラバスに曜日・時限が設定されていません</b>。<br>
+      終日の工房作業でコマに割り当てられていないためで、ここには出てきません。<br>
+      「さがす」から開いて「時間割に足す」で別枠に入れられます。</span></div>`;
+  document.getElementById("pickwrap").innerHTML = `<div class="pkback"></div><div class="picker">
+    <div class="pkhead">
+      <h3>${d}曜 ${p}限</h3><span style="font-size:11.5px;color:var(--sub)">${term}</span>
+      <span class="cnt">${cands.length}件${ME.dept?` ／ ${esc(ME.fac)} ${esc(ME.dept)} ${ME.grade?gname(ME.grade):""} で判定`:"　アカウントで所属を選ぶと絞れます"}</span>
+      <button class="close">×</button>
+    </div>
+    <div class="pkfilter">
+      <input type="text" id="pkq" placeholder="この枠のなかを絞り込む" value="${esc(picking.q)}">
+      <label><input type="checkbox" id="pkng" ${picking.hideNG?"":"checked"}>履修できないものも表示</label>
+    </div>
+    <div class="pklist">${rows}</div></div>`;
+
+  const shut = ()=>{ picking=null; drawPicker(); };
+  document.querySelector(".picker .close").onclick = shut;
+  document.querySelector(".pkback").onclick = shut;
+  const qi = document.getElementById("pkq");
+  qi.oninput = ()=>{ picking.q=qi.value; const s=qi.selectionStart; drawPicker();
+    const n=document.getElementById("pkq"); n.focus(); n.setSelectionRange(s,s); };
+  document.getElementById("pkng").onchange = e=>{ picking.hideNG=!e.target.checked; drawPicker(); };
+  document.querySelectorAll(".pkitem").forEach(it=>{
+    it.onclick = ()=>{
+      const c = byKey[it.dataset.k];
+      const terms = c.term==="通年" ? ["前期","後期"] : [c.term];
+      const clash = terms.filter(t=>TT[ttk(t,d,p)] && TT[ttk(t,d,p)]!==it.dataset.k);
+      if(clash.length && !confirm(`${clash.join("・")}の${d}${p}限には別の授業が入っています。置きかえますか？`)) return;
+      terms.forEach(t=>{ TT[ttk(t,d,p)] = it.dataset.k; });
+      SS("geidai_tt_v1",TT); picking=null; renderTT(); drawPicker();
+    };
+  });
+}
+
+/* ══════════ お気に入り ══════════ */
+function isFav(c){ return !!FAVS[key(c)]; }
+function toggleFav(c){
+  const k=key(c);
+  if(FAVS[k]) delete FAVS[k]; else FAVS[k]={at:Date.now(),tags:[]};
+  SS("geidai_favs_v1",FAVS); paintCounts();
+}
+function allFavTags(){
+  const s=new Set(); Object.values(FAVS).forEach(f=>(f.tags||[]).forEach(t=>s.add(t)));
+  return [...s].sort();
+}
+function renderFav(){
+  const tags = allFavTags();
+  document.getElementById("favbar").innerHTML =
+    `<span class="lb">タグ</span>` +
+    [["","すべて"],...tags.map(t=>[t,t])].map(([v,l])=>
+      `<button class="tbtn ${favTag===v?"on":""}" data-t="${esc(v)}">${esc(l)}</button>`).join("") ;
+  document.querySelectorAll("#favbar .tbtn").forEach(b=>
+    b.onclick = ()=>{ favTag=b.dataset.t; renderFav(); });
+
+  const items = Object.keys(FAVS).map(k=>byKey[k]).filter(Boolean)
+    .filter(c=>!favTag || (FAVS[key(c)].tags||[]).includes(favTag))
+    .sort((a,b)=>FAVS[key(b)].at-FAVS[key(a)].at);
+  const el = document.getElementById("favlist");
+  if(!items.length){
+    el.innerHTML = `<div class="empty">まだお気に入りがありません。<br>
+      「さがす」で気になる授業の★を押すとここに溜まります。</div>`;
+    return;
+  }
+  el.innerHTML = items.map((c,i)=>rowHTML(c,i,true)).join("");
+  bindRows(el, items, true);
+}
+function tagEditHTML(c){
+  const f = FAVS[key(c)]; if(!f) return "";
+  return `<div class="tagedit">
+    ${(f.tags||[]).map(t=>`<span class="mytag">${esc(t)}<button data-dt="${esc(t)}">×</button></span>`).join("")}
+    <input class="newtag" placeholder="タグを追加" maxlength="12">
+    <button class="btn" style="padding:4px 11px;font-size:11.5px" data-addtag>足す</button>
+  </div>`;
+}
+
+/* ══════════ 一覧の行 ══════════ */
+function rowHTML(c,i,withTag){
+  const j = judge(c);
+  const slot = c.day && c.period ? `${c.day}${c.period}` : "";
+  return `<li class="row" data-k="${esc(key(c))}">
+    <button class="fav ${isFav(c)?"on":""}" title="お気に入り">${isFav(c)?"★":"☆"}</button>
+    <div>
+      <div class="ti">${esc(c.title)}</div>
+      <div class="mt">
+        <span class="slotpin ${slot?"":"none"}">${slot||"曜日未定"}</span>
+        ${esc(c.term)}<span class="dot">/</span>${esc(c.kubun)}
+        ${c.credits?`<span class="dot">/</span>${c.credits}単位`:""}
+        ${c.teacher?`<span class="dot">/</span>${esc(c.teacher)}`:""}
+      </div>
+    </div>
+    <div class="right"><span class="v ${j.cls}">${j.label}</span>${rateHTML(c)}</div>
+    <div class="detail" data-d="1"></div>
+  </li>`;
+}
+function detailHTML(c){
+  const j = judge(c);
+  const seen=new Set();
+  const notes = (c.restrictions||[]).filter(r=>{
+    const k=r.kind+"|"+r.source; if(seen.has(k)) return false; seen.add(k); return true;
+  }).map(r=>{
+    const NT={GRAD:"大学院向けの科目です。",UNDER:"",ANY:""};
+    const body = NT[r.note]!==undefined ? NT[r.note] : (r.note||"");
+    return `<div class="note"><div class="k">${esc(KIND_LABEL[r.kind]||r.kind)}${r.target?" — "+esc(r.target):""}</div>
+      ${body?`<div class="t">${esc(body)}</div>`:""}
+      <div class="src">根拠（${esc(r.source_field)}）：${esc(r.source)}</div></div>`;
+  }).join("");
+  const canAdd = c.day && c.period;
+  const terms = c.term==="通年"?["前期","後期"]:[c.term];
+  const placed = canAdd ? terms.every(t=>TT[ttk(t,c.day,c.period)]===key(c))
+                        : terms.every(t=>TT[`${t}|*${key(c)}`]===key(c));
+  /* 先輩の履修記録から出す割合。ここがこのサイトの肝 */
+  const tr = takeRate(c, ME.dept, ME.grade);
+  const tb = takenBy(c).filter(x=>x.n>=2).slice(0,6);
+  const takenHTML = `
+    ${tr && !tr.few ? `<div class="rate2"><b>${esc(ME.dept)} ${gname(ME.grade)}</b>の
+        <b class="pct">${tr.pct.toFixed(0)}%</b> が履修
+        <span class="k">（${tr.n}/${tr.total}人の記録）</span></div>` : ""}
+    ${tb.length ? `<div class="bars">${tb.map(x=>`
+        <div class="trbar"><span class="bl">${esc(x.dept)} ${x.grade}年</span>
+          <span class="bg"><i style="width:${x.pct.toFixed(0)}%"></i></span>
+          <span class="bn">${x.pct.toFixed(0)}%<em>${x.n}/${x.total}</em></span></div>`).join("")}</div>`
+      : ""}`;
+
+  return `${takenHTML}<div class="dgrid">
+      <div><b>講義コード</b><span>${esc(c.code)}</span></div>
+      <div><b>曜日・時限</b><span>${canAdd?`${c.day}曜 ${c.period}限`:"—"}</span></div>
+      <div><b>単位</b><span>${c.credits!=null?c.credits:"—"}</span></div>
+      <div><b>校地</b><span>${esc(c.campus||"—")}</span></div>
+      <div><b>対象</b><span>${esc(c.level_label||"—")}</span></div>
+      ${c.target_students?`<div style="grid-column:1/-1"><b>対象学生</b><span>${esc(c.target_students)}</span></div>`:""}
+    </div>
+    ${j.why?`<div class="note"><div class="k">いまの所属での判定 — ${esc(j.label)}</div>
+       <div class="src">${j.html?j.why:esc(j.why)}</div></div>`:""}
+    ${notes}
+    ${tagEditHTML(c)}
+    <div class="acts">
+      <button class="btn o" data-add>
+        ${placed?"時間割に入っています"
+          :canAdd?`時間割に置く（${c.day}${c.period}）`
+                 :"時間割に足す（曜日未定・集中講義など）"}</button>
+      <a class="link" target="_blank" rel="noopener"
+        href="https://cplan-web.off.geidai.ac.jp/public/web/Syllabus/WebSyllabusSansho/UI/WSL_SyllabusSansho.aspx?P1=${encodeURIComponent(c.code)}&P2=${encodeURIComponent(c.year)}&P3=${encodeURIComponent(c.year)}0401">公式シラバスを開く →</a>
+    </div>
+    ${reviewsHTML(c)}`;
+}
+
+function reviewsHTML(c){
+  const all = getR(c);
+  const rs = (rvDeptOnly && ME.dept) ? all.filter(r=>r.dept===ME.dept) : all;
+  const bd = byDept(c);
+
+  const summary = bd.length ? `<div class="deptbar">
+    ${bd.map(x=>`<span class="dchip${ME.dept===x.dept?" me":""}">
+      ${esc(x.dept)} <b>${x.avg.toFixed(1)}</b> <i>${x.n}</i></span>`).join("")}
+    </div>` : "";
+
+  const list = rs.length ? rs.map(r=>`
+    <div class="rvitem">
+      <div class="rvhead">${starHTML(r.star)}
+        <span class="rvmeta">${r.dept?`<b class="who">${esc(r.dept)}${r.grade?" "+r.grade+"年":""}</b>`:""}
+          ${r.ease?EASE[r.ease]:""}${r.year?` ／ ${esc(r.year)}年度に履修`:""}</span></div>
+      ${r.body?`<div class="rvbody">${esc(r.body)}</div>`:""}
+      ${(r.tags||[]).length?`<div class="rvchips">${r.tags.map(t=>`<span class="tag">${esc(t)}</span>`).join("")}</div>`:""}
+      ${r.mine?`<button class="del" data-at="${r.at}">削除</button>`:""}
+    </div>`).reverse().join("")
+    : `<div class="rvmeta">${all.length?"この学科の口コミはまだありません。":"まだ口コミがありません。最初の1件を書いてみてください。"}</div>`;
+
+  return `<div class="rv">
+    <h3>口コミ ${all.length?`(${all.length})`:""}</h3>
+    ${summary}
+    ${ME.dept&&all.length?`<label class="only"><input type="checkbox" class="deptonly" ${rvDeptOnly?"checked":""}>
+       ${esc(ME.dept)}の人の口コミだけ見る</label>`:""}
+    ${list}
+    <div class="form">
+      <div class="fr">
+        <div><label>総合</label><div class="pick star">
+          ${[1,2,3,4,5].map(i=>`<button data-v="${i}">★</button>`).join("")}</div></div>
+        <div><label>あなたの学科</label><select class="rdept">
+          ${DEPTS.map(x=>`<option value="${esc(x)}" ${x===ME.dept?"selected":""}>${esc(x||"選ぶ")}</option>`).join("")}</select></div>
+        <div><label>当時の学年</label><select class="rgrade"><option value="">選ぶ</option>
+          ${GRADES.filter(Boolean).map(g=>`<option value="${g}" ${String(g)===ME.grade?"selected":""}>${gname(g)}</option>`).join("")}</select></div>
+        <div><label>単位の取りやすさ</label><select class="ease"><option value="">選ぶ</option>
+          ${[1,2,3,4,5].map(i=>`<option value="${i}">${EASE[i]}</option>`).join("")}</select></div>
+        <div><label>履修した年度</label><select class="year"><option value="">選ぶ</option>
+          ${["2026","2025","2024","2023","2022"].map(y=>`<option>${y}</option>`).join("")}</select></div>
+      </div>
+      <div style="margin-bottom:10px"><label>あてはまるもの</label>
+        <div class="chipset">${TAGS.map(t=>`<button data-t="${esc(t)}">${esc(t)}</button>`).join("")}</div></div>
+      <div style="margin-bottom:10px"><label>気をつけること・どんな授業か</label>
+        <textarea placeholder="例）初回のガイダンスに出ないと履修できない。後半は自主制作が中心で、前半で方向を決めておくと楽。"></textarea></div>
+      <button class="btn submit">口コミを投稿する</button>
+      <div class="disc">授業についてだけ書いてください。教員個人への人格的な批判・私生活への言及は投稿しないでください。<br>
+        いまは試作のため、書いた内容はこのブラウザの中だけに保存されます。</div>
+    </div></div>`;
+}
+
+function bindRows(root, arr, withTag){
+  [...root.querySelectorAll("li.row")].forEach((li,i)=>{
+    const c = arr[i];
+    li.querySelector(".fav").onclick = e=>{
+      e.stopPropagation(); toggleFav(c);
+      const b=li.querySelector(".fav");
+      b.classList.toggle("on", isFav(c)); b.textContent = isFav(c)?"★":"☆";
+      if(pane==="tt") renderFav();
+      else if(li.classList.contains("open")) openDetail(li,c);
+    };
+    li.onclick = e=>{
+      if(e.target.closest(".detail")) return;
+      li.classList.toggle("open");
+      if(li.classList.contains("open")) openDetail(li,c);
+    };
+  });
+}
+function openDetail(li,c){
+  const d = li.querySelector(".detail");
+  d.innerHTML = detailHTML(c);
+  d.onclick = e=>e.stopPropagation();
+
+  const add = d.querySelector("[data-add]");
+  if(add) add.onclick = ()=>{
+    const terms = c.term==="通年"?["前期","後期"]:[c.term];
+    if(c.day && c.period){
+      const clash = terms.filter(t=>TT[ttk(t,c.day,c.period)] && TT[ttk(t,c.day,c.period)]!==key(c));
+      if(clash.length && !confirm(`${clash.join("・")}の${c.day}${c.period}限には別の授業が入っています。置きかえますか？`)) return;
+      terms.forEach(t=>{ TT[ttk(t,c.day,c.period)] = key(c); });
+    } else {
+      terms.forEach(t=>{ TT[`${ttGrade}|${t}|*${key(c)}`] = key(c); });
+    }
+    SS("geidai_tt_v1",TT); openDetail(li,c); paintCounts();
+  };
+  // タグ編集
+  d.querySelectorAll("[data-dt]").forEach(b=> b.onclick=()=>{
+    const f=FAVS[key(c)]; f.tags=(f.tags||[]).filter(t=>t!==b.dataset.dt);
+    SS("geidai_favs_v1",FAVS); openDetail(li,c); });
+  const addTag = d.querySelector("[data-addtag]");
+  if(addTag) addTag.onclick = ()=>{
+    const inp=d.querySelector(".newtag"), v=inp.value.trim(); if(!v) return;
+    const f=FAVS[key(c)]; f.tags=[...new Set([...(f.tags||[]),v])];
+    SS("geidai_favs_v1",FAVS); openDetail(li,c); };
+  // 学科で絞る
+  const only = d.querySelector(".deptonly");
+  if(only) only.onchange = e=>{ rvDeptOnly=e.target.checked; openDetail(li,c); };
+  // 口コミ削除（消せるのは自分が書いたものだけ）
+  d.querySelectorAll("[data-at]").forEach(b=> b.onclick=()=>{
+    if(!confirm("この口コミを削除しますか？")) return;
+    const k=key(c), at=Number(b.dataset.at);
+    const gone=(MINE[k]||[]).find(r=>r.at===at);
+    MINE[k]=(MINE[k]||[]).filter(r=>r.at!==at);
+    if(!MINE[k].length) delete MINE[k];
+    SS("geidai_reviews_v2",MINE);
+    if(gone && gone.id && typeof GAPI!=="undefined") GAPI.delReview(gone.id).catch(()=>{});
+    rebuild(); openDetail(li,c);
+    li.querySelector(".right").innerHTML =
+      `<span class="v ${judge(c).cls}">${judge(c).label}</span>${rateHTML(c)}`; });
+  // 投稿
+  let star=0, tags=[];
+  d.querySelectorAll(".pick.star button").forEach(b=> b.onclick=()=>{
+    star=Number(b.dataset.v);
+    d.querySelectorAll(".pick.star button").forEach(x=>
+      x.classList.toggle("on", Number(x.dataset.v)<=star)); });
+  d.querySelectorAll(".chipset button").forEach(b=> b.onclick=()=>{
+    const t=b.dataset.t;
+    if(tags.includes(t)){ tags=tags.filter(x=>x!==t); b.classList.remove("on"); }
+    else { tags.push(t); b.classList.add("on"); } });
+  d.querySelector(".submit").onclick = ()=>{
+    if(!star){ alert("総合の星を選んでください。"); return; }
+    const k=key(c);
+    const rv = { star,
+      ease:Number(d.querySelector(".ease").value)||0,
+      year:d.querySelector(".year").value||"",
+      dept:d.querySelector(".rdept").value||"",
+      grade:d.querySelector(".rgrade").value||"",
+      tags, body:d.querySelector("textarea").value.trim(),
+      at:Date.now(), mine:true };
+    /* まず手元に入れて画面を更新する。サーバへは裏で送る。
+       送れなくても画面は止めない（届かなかったぶんは api.js が貯めて後で送る）。 */
+    (MINE[k]=MINE[k]||[]).push(rv);
+    SS("geidai_reviews_v2",MINE); rebuild(); openDetail(li,c);
+    li.querySelector(".right").innerHTML =
+      `<span class="v ${judge(c).cls}">${judge(c).label}</span>${rateHTML(c)}`;
+    if(typeof GAPI!=="undefined") GAPI.putReview({...rv, k}).catch(()=>{}); };
+}
+
+/* ══════════ さがす ══════════ */
+function match(c){
+  if(state.year && c.year!==state.year) return false;
+  if(state.kubun && c.kubun!==state.kubun) return false;
+  if(state.term && c.term!==state.term) return false;
+  if(state.campus && c.campus!==state.campus) return false;
+  if(state.day && c.day!==state.day) return false;
+  if(state.q){
+    const q=state.q.toLowerCase();
+    if(![c.title,c.subtitle,c.gakusoku,c.code,c.teacher,c.teacher_actual]
+        .join(" ").toLowerCase().includes(q)) return false;
+  }
+  return true;
+}
+/* 並べ替え用の点。C件ぶんの「全体平均」を下駄として足してから割る。
+   口コミ1件の5.0 → 4.2くらい、40件の4.7 → ほぼ4.7 のままになる。 */
+const PRIOR_N = 5;
+let PRIOR_AVG = null;
+function priorAvg(){
+  if(PRIOR_AVG!=null) return PRIOR_AVG;
+  let s=0,n=0;
+  DATA.courses.forEach(c=>{ const a=agg(c); if(a&&a.n){ s+=a.avg*a.n; n+=a.n; } });
+  return (PRIOR_AVG = n ? s/n : 3.8);
+}
+function score(a){
+  if(!a || !a.n) return 0;
+  const p=priorAvg();
+  return (a.avg*a.n + p*PRIOR_N) / (a.n + PRIOR_N);
+}
+function renderFind(){
+  let all = DATA.courses.filter(match);
+  all = all.slice().sort((a,b)=>{
+    const A=agg(a),B=agg(b);
+    if(state.sort==="reviews") return (B?B.n:0)-(A?A.n:0);
+    if(state.sort==="ease")    return (B?B.ease:0)-(A?A.ease:0);
+    if(state.sort==="name")    return a.title.localeCompare(b.title,"ja");
+    if(state.sort==="slot"){
+      const s=x=>x.day?DAYS.indexOf(x.day)*10+x.period:99;
+      return s(a)-s(b) || a.title.localeCompare(b.title,"ja");
+    }
+    /* 「評価が高い順」を素の平均でやると、口コミ1件の5.0が
+       口コミ40件の4.7より上に来てしまう。それは順位として嘘になる。
+       全体平均に向かって引き戻す（件数が増えるほど自分の平均に近づく）。 */
+    return score(B)-score(A) || (B?B.n:0)-(A?A.n:0);
+  });
+  document.getElementById("count").innerHTML =
+    `<b>${all.length}</b>件${state.day?` ／ ${state.day}曜`:""}`;
+  const el = document.getElementById("list");
+  if(!all.length){
+    el.innerHTML=`<div class="empty">条件に合う授業がありません</div>`;
+    document.getElementById("more").style.display="none"; return;
+  }
+  const page = all.slice(0,shown);
+  el.innerHTML = page.map((c,i)=>rowHTML(c,i)).join("");
+  bindRows(el,page);
+  document.getElementById("more").style.display = all.length>shown?"block":"none";
+}
+
+/* ══════════ 画面切替・共通 ══════════ */
+/* タブ横の数字は出さない。数を見せる場所ではないので。 */
+function paintCounts(){}
+/* ダミーを使っていることを画面に出す。黙って混ぜない。 */
+function paintDummy(){
+  const el=document.getElementById("dummybar");
+  const nr=(typeof DUMMY_REVIEWS!=="undefined")?DUMMY_REVIEWS.length:0;
+  const np=(typeof DUMMY_RECORDS!=="undefined")?DUMMY_RECORDS.length:0;
+  if(!nr && !np){ el.innerHTML=""; return; }
+  el.innerHTML = USEDUMMY
+    ? `<div class="dbar">見た目の確認用に<b>ダミーの口コミ${nr}件・履修記録${np}人ぶん</b>を混ぜて表示しています。
+        実在の講義に紐づいていますが、内容は架空です。
+        <button id="dtoggle">ダミーを外す</button></div>`
+    : `<div class="dbar off">ダミーを外しています。表示は自分が書いたぶんだけです。
+        <button id="dtoggle">ダミーを戻す</button></div>`;
+  document.getElementById("dtoggle").onclick=()=>{
+    USEDUMMY=!USEDUMMY; SS("geidai_dummy_v1",USEDUMMY); rebuild(); paintDummy(); go(pane);
+  };
+}
+function go(p){
+  pane=p;
+  document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.dataset.p===p));
+  document.querySelectorAll(".pane").forEach(x=>x.classList.toggle("on",x.id==="p-"+p));
+  if(p==="tt"){ renderTT(); renderFav(); } if(p==="find") renderFind();
+  if(p==="tea" && typeof renderTeachers==="function") renderTeachers();
+  if(p==="art" && typeof renderArtists==="function") renderArtists();
+  if(["ex","gv","kb"].includes(p) && typeof renderBoard==="function") renderBoard(p);
+  if(p==="ry" && typeof renderRyugaku==="function") renderRyugaku();
+  if(p==="sk" && typeof renderShukatsu==="function") renderShukatsu();
+  if(p==="ar" && typeof renderArticles==="function") renderArticles();
+  if(p==="rs" && typeof renderReserve==="function") renderReserve();
+  if(p==="acc" && typeof renderAccount==="function") renderAccount();
+  document.body.classList.toggle("mapfull", p==="map");
+  document.body.classList.toggle("rsfull", p==="rs");
+  /* 地図は「まず即座に」「レイアウトが落ち着いてからもう一度」の二段で初期化する。
+     rAF だけに任せると、タブが裏で開かれたときに rAF が止まって永久に白いままになる。 */
+  if(p==="map"){ sizeMap();
+    if(typeof initMap==="function"){ initMap(); requestAnimationFrame(initMap); } }
+}
+/* 地図は画面いっぱいに使いたい。ヘッダとフッタの実寸を測って高さを決める。 */
+function sizeMap(){
+  const head=document.querySelector("header").offsetHeight;
+  const bar=0;
+  const foot=104; /* 下のガラスのタブバーぶん */
+  document.documentElement.style.setProperty("--maph",
+    Math.max(420, innerHeight - head - bar - foot) + "px");
+}
+addEventListener("resize",()=>{ if(pane==="map") sizeMap(); });
+function refresh(){
+  const cs = DATA.courses;
+  // 土曜に授業が1件も無い年度で空の列を見せない
+  const used = new Set(cs.filter(c=>c.year===state.year && c.day).map(c=>c.day));
+  DAYS = ALLDAYS.filter(d=>["月","火","水","木","金"].includes(d) || used.has(d));
+  const ys=[...new Set(cs.map(c=>c.year))].sort().reverse();
+  const ks=[...new Set(cs.filter(c=>c.year===state.year).map(c=>c.kubun))].sort();
+  const ts=[...new Set(cs.map(c=>c.term).filter(Boolean))].sort();
+  const cps=[...new Set(cs.map(c=>c.campus).filter(Boolean))].sort();
+  const sel=(id,opts,cur,all)=>{ document.getElementById(id).innerHTML =
+    [`<option value="">${all}</option>`,...opts.map(o=>
+      `<option ${o===cur?"selected":""}>${esc(o)}</option>`)].join(""); };
+  document.getElementById("fyear").innerHTML =
+    ys.map(y=>`<option ${y===state.year?"selected":""}>${y}年度</option>`).join("");
+  sel("fkubun",ks,state.kubun,"すべての区分");
+  sel("fterm", ts,state.term, "すべての時期");
+  sel("fcampus",cps,state.campus,"すべての校地");
+  document.getElementById("fday").innerHTML =
+    [`<option value="">すべての曜日</option>`,...DAYS.map(d=>
+      `<option value="${d}" ${state.day===d?"selected":""}>${d}曜</option>`)].join("");
+  document.getElementById("fsort").innerHTML =
+    [["star","評価が高い順"],["reviews","口コミが多い順"],["ease","楽な順"],
+     ["slot","曜日・時限順"],["name","名前順"]]
+    .map(([v,l])=>`<option value="${v}" ${state.sort===v?"selected":""}>${l}</option>`).join("");
+  paintCounts(); go(pane);
+}
+
+/* 所属を書き換える唯一の入口。アカウントのタブから呼ばれる。
+   ここを通せば、時間割の学年・履修判定・口コミの絞り込みが一度に揃う。 */
+window.__setMe = function(patch){
+  Object.assign(ME, patch);
+  SS("geidai_me_v1", ME);
+  if(typeof window.__syncMe==="function") window.__syncMe();
+  if(picking) drawPicker();
+};
+window.__meOptions = () => ({FACULTIES, DEPTS, GRADES, gname});
+
+/* 帯のログインボタン。
+   入口が「アカウント」タブの中にしか無く、初めて来た人には見つからなかった。
+   帯の右にオレンジで1つだけ置く。押したらアカウントのタブへ送るだけで、
+   ログインの手続き自体は増やさない（入口は1か所のままにする）。
+   入っている人には出さない。用が済んだボタンを残すと、ただの飾りになる。 */
+window.__paintLogin = function(){
+  const b=document.getElementById("hlogin"); if(!b) return;
+  b.hidden = (typeof isLoggedIn==="function") ? isLoggedIn() : false;
+};
+(function(){
+  const b=document.getElementById("hlogin"); if(!b) return;
+  b.onclick=()=>{ go("acc"); scrollTo(0,0); };
+  window.__paintLogin();
+})();
+
+fetch("courses.json",{cache:"no-store"}).then(r=>r.json()).then(d=>{
+  DATA=d; d.courses.forEach(c=>byKey[key(c)]=c);
+  rebuild();
+  if(typeof paintAccount==="function") paintAccount();
+  document.getElementById("fetched").textContent=(d.stats.fetched_at||"").slice(0,10);
+  /* 所属を決めるのはアカウントのタブだけ。ヘッダにセレクトは置かない。
+     ここは「アカウント側で所属が変わったときに、画面全体を合わせ直す」入口。 */
+  window.__syncMe = () => {
+    if(!LS("geidai_ttgrade_v1",null)){
+      ttGrade=ttGradeFromMe();
+      const s=document.getElementById("ttgrade"); if(s) s.value=ttGrade;
+      migrateTT();
+    }
+    rvDeptOnly=false; rebuild();
+    /* ここで renderAccount() を呼ばない。所属セレクトはアカウント画面の中にあるので、
+       描き直すと同じ画面にある書きかけのプロフィールや問い合わせ文が消える。 */
+    refresh(); if(pane==="tt") renderTT();
+  };
+  const gm=document.getElementById("gmark");
+  if(gm && typeof GEIDAY_MARK!=="undefined") gm.innerHTML=GEIDAY_MARK;
+  window.__syncMe();
+  document.querySelectorAll(".tab").forEach(t=> t.onclick=()=>go(t.dataset.p));
+  /* 時間割の中で「表」と「お気に入り」を入れ替える。
+     画面ごと切り替えるのではなく、上の単位数はそのまま残す。 */
+  document.querySelectorAll("#ttview button").forEach(b=> b.onclick=()=>{
+    const v=b.dataset.v;
+    document.querySelectorAll("#ttview button").forEach(x=>x.classList.toggle("on",x===b));
+    document.getElementById("ttwrap").style.display  = v==="tt"  ? "" : "none";
+    document.getElementById("favwrap").style.display = v==="fav" ? "" : "none";
+    if(v==="fav") renderFav();
+  });
+  migrateTT();
+  document.getElementById("ttgrade").innerHTML =
+    GRADES_TT.map(([v,t])=>`<option value="${v}" ${v===ttGrade?"selected":""}>${t}の時間割</option>`).join("");
+  document.getElementById("ttgrade").onchange = e=>{
+    ttGrade=e.target.value; SS("geidai_ttgrade_v1",ttGrade);
+    picking=null; drawPicker(); rebuild(); renderTT(); };
+  document.querySelectorAll("#termseg button").forEach(b=> b.onclick=()=>{
+    term=b.dataset.t;
+    document.querySelectorAll("#termseg button").forEach(x=>x.classList.toggle("on",x===b));
+    picking=null; drawPicker(); renderTT(); });
+
+  document.getElementById("fyear").onchange=e=>{state.year=e.target.value.replace("年度","");state.kubun="";shown=40;refresh();};
+  document.getElementById("fkubun").onchange=e=>{state.kubun=e.target.value;shown=40;renderFind();};
+  document.getElementById("fterm").onchange=e=>{state.term=e.target.value;shown=40;renderFind();};
+  document.getElementById("fcampus").onchange=e=>{state.campus=e.target.value;shown=40;renderFind();};
+  document.getElementById("fday").onchange=e=>{state.day=e.target.value;shown=40;renderFind();};
+  document.getElementById("fsort").onchange=e=>{state.sort=e.target.value;shown=40;renderFind();};
+  let t0; document.getElementById("q").oninput=e=>{ clearTimeout(t0);
+    t0=setTimeout(()=>{state.q=e.target.value.trim();shown=40;renderFind();},180); };
+  document.getElementById("more").onclick=()=>{shown+=40;renderFind();};
+  if(typeof bindTeacherSearch==="function") bindTeacherSearch();
+  /* 教員ページから科目に飛ぶ */
+  window.__openCourse = k => {
+    const c = byKey[k]; if(!c) return;
+    state.q=c.title; state.year=c.year; state.kubun=""; state.term=""; state.day="";
+    document.getElementById("q").value=c.title; shown=40;
+    go("find"); refresh();
+    setTimeout(()=>{ const li=document.querySelector("#list li.row");
+      if(li && !li.classList.contains("open")) li.click(); },60);
+  };
+  refresh();
+});
+</script>
+</body>
+</html>
