@@ -170,7 +170,7 @@ function homeCards(){
   const RS=[['all','AMC 機材カレンダー（まとめて）','amc'],['lasercutter','レーザーカッター','kobo'],['3dprinter','3Dプリンター','kobo'],['printer','大判プリンター','kobo'],['recordingstudio','サウンドスタジオ','kobo'],['cnc','NC切削機','kobo']];
   const rsRows='<div class="lcard wide lwide"><b>予約 <span class="ld">AMC</span></b><div class="lrows">'+RS.map(([id,l,ic])=>
     '<button type="button" class="lr" data-p="rs" data-rs="'+id+'"><span class="ltile s">'+I[ic]+'</span><span>'+esc(l)+'</span><span class="chev">'+I.chev+'</span></button>').join('')+'</div></div>';
-  return todayCard()+'<div class="lrow">'+c.tt+c.map+c.tea+'</div>'+rsRows+featJk();
+  return '<div class="lrow">'+c.tt+c.map+c.tea+'</div>'+rsRows+featJk();
 }
 function featJk(){
   if(typeof JUKEN_POSTS==='undefined') return '';

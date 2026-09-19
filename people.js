@@ -170,9 +170,13 @@ function allArtists(){
   const ids  = new Set(mine.concat(real).map(a=>String(a.id)));
   return mine.concat(real, DART.filter(a=>!ids.has(String(a.id))));
 }
+/* 学年の値と表示。数字はそのまま学部（B1〜B4）。M1/M2/その他/休学中は文字で持つ */
+const GRADES=[['1','B1'],['2','B2'],['3','B3'],['4','B4'],['M1','M1'],['M2','M2'],['other','その他'],['leave','休学中']];
+const gradeLabel=g=>{ if(g==null||g==='') return ''; const s=String(g); const hit=GRADES.find(x=>x[0]===s); return hit?hit[1]:s; };
+let aGrade='';
 function renderArtists(){
   const wrap=document.getElementById('p-art');
-  const list=allArtists().filter(a=>!aFilter||a.dept===aFilter);
+  const list=allArtists().filter(a=>(!aFilter||a.dept===aFilter)&&(!aGrade||String(a.grade)===aGrade));
   /* 学科が空の人（まだ所属を選んでいない人）でボタンを作らない。
      中身のない青いチップが1つ並んでしまう。 */
   const depts=[...new Set(allArtists().map(a=>a.dept).filter(Boolean))];
@@ -190,6 +194,10 @@ function renderArtists(){
         <option value="">学科：すべて</option>
         ${depts.map(d=>`<option value="${esc(d)}"${aFilter===d?' selected':''}>${esc(d)}</option>`).join('')}
       </select>
+      <select class="fsel" id="agrade">
+        <option value="">学年：すべて</option>
+        ${GRADES.map(([v,l])=>`<option value="${v}"${aGrade===v?' selected':''}>${l}</option>`).join('')}
+      </select>
       <span class="acnt">${list.length}人</span>
     </div>
     <div class="agrid">${list.map(a=>cardHTML(a)).join('')}</div>
@@ -199,6 +207,8 @@ function renderArtists(){
   if(mk) mk.onclick=()=>{ if(typeof go==='function') go('acc'); };
   const ad=document.getElementById('adept');
   if(ad) ad.onchange=()=>{aFilter=ad.value;renderArtists();};
+  const ag=document.getElementById('agrade');
+  if(ag) ag.onchange=()=>{aGrade=ag.value;renderArtists();};
   /* Number() をかけない。UUIDのidは数値にすると NaN になって、開けなくなる */
   wrap.querySelectorAll('.acard').forEach(c=>c.onclick=()=>openArtist(c.dataset.a, c));
   if(aOpen!=null) openArtist(aOpen);
@@ -284,7 +294,7 @@ function cardHTML(a){
       <div class="an"><span class="ann">${esc(a.name||'（名前未設定）')}</span>${
         a.me?'<span class="ame">あなた</span>':''}${
         a.dummy?'<span class="adum">ダミー</span>':''}</div>
-      <div class="ad">${esc(a.dept||'')}${a.grade?' '+a.grade+'年':''}</div>
+      <div class="ad">${esc(a.dept||'')}${gradeLabel(a.grade)?' '+gradeLabel(a.grade):''}</div>
     </div>
   </div>`;
 }
@@ -300,7 +310,7 @@ function detailHTML(a){
       <img class="aav big" src="${avatarOf(a)}" alt="">
       <div>
         <h3>${esc(a.name||'（名前未設定）')}</h3>
-        <div class="ad">${esc(a.dept||'')}${a.grade?' '+a.grade+'年':''}
+        <div class="ad">${esc(a.dept||'')}${gradeLabel(a.grade)?' '+gradeLabel(a.grade):''}
           ${a.dummy?'<span class="adum">ダミー</span>':''}</div>
         <div class="am">${(a.media||[]).map(m=>`<span>${esc(m)}</span>`).join('')}</div>
       </div>
@@ -330,8 +340,8 @@ function editHTML(a){
       <label>名前・活動名<input id="e-name" value="${esc(a.name)}" maxlength="24"></label>
       <label>学科<select id="e-dept">${DEPTS.map(d=>
         `<option ${d===a.dept?'selected':''}>${esc(d||'選ぶ')}</option>`).join('')}</select></label>
-      <label>学年<select id="e-grade">${[1,2,3,4].map(g=>
-        `<option value="${g}" ${g===a.grade?'selected':''}>${g}年</option>`).join('')}</select></label>
+      <label>学年<select id="e-grade">${GRADES.map(([v,l])=>
+        `<option value="${v}" ${String(a.grade)===v?'selected':''}>${l}</option>`).join('')}</select></label>
     </div>
     <label class="afull">やっていること
       <textarea id="e-doing" maxlength="200" placeholder="例）陶芸をやっています。手を動かしながら考えるほうです。">${esc(a.doing)}</textarea></label>
@@ -375,7 +385,7 @@ function bindDetail(){
   if(save) save.onclick=()=>{
     const g=id=>document.getElementById(id);
     ME_ART.name=g('e-name').value.trim();
-    ME_ART.dept=g('e-dept').value; ME_ART.grade=Number(g('e-grade').value);
+    ME_ART.dept=g('e-dept').value; { const gv=g('e-grade').value; ME_ART.grade=/^\d$/.test(gv)?Number(gv):gv; }
     ME_ART.doing=g('e-doing').value.trim(); ME_ART.want=g('e-want').value.trim();
     ME_ART.media=g('e-media').value.split(/[、,]/).map(s=>s.trim()).filter(Boolean);
     ME_ART.sns={}; ['instagram','x','tiktok','youtube'].forEach(k=>{

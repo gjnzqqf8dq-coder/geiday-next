@@ -313,3 +313,27 @@ body.mapfull main{max-width:640px;padding:6px 14px calc(env(safe-area-inset-bott
 #p-map .mcamp,#p-map .maplayout{display:none}
 #p-tea #tq,#p-find #q{border:0;border-radius:999px;background:#fff;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.14);padding:10px 16px;font-family:var(--ln-font);font-size:15px;box-sizing:border-box}
 #p-tea #tq{flex:1;min-width:0}
+
+/* ============ 2026-09-20 追加分 ============ */
+/* ホームの「さがす」：青ベタをやめて薄青に（画面の主役はカード） */
+.lbtn{background:var(--ln-tint);color:var(--ln-blue)}
+/* つながる：学科・学年の2本 */
+#p-art .abar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+#p-art .acnt{margin-left:auto;font-size:12.5px;color:var(--ln-gray);font-weight:500}
+/* 投稿フォーム：1列で縦に。白カードとして独立させ、下の一覧と間を空ける */
+.bform{display:block;padding:16px;margin:0 0 20px;border:0;background:#fff;border-radius:var(--ln-r);box-shadow:inset 0 0 0 .5px rgba(0,0,0,.09)}
+.bform label{display:block;width:100%;margin:0 0 12px;font-size:12.5px;font-weight:600;color:var(--ln-gray)}
+.bform label input,.bform label select,.bform label textarea{width:100%;box-sizing:border-box;margin-top:5px;font-size:15px;padding:11px 12px;border:0;border-radius:12px;background:var(--ln-fill);color:var(--ln-ink)}
+.bform input[hidden]{display:none!important}
+.bform .bkind{display:flex;padding:3px;border-radius:999px;background:var(--ln-fill);margin:0 0 14px;gap:2px}
+.bform .bkind .tbtn{flex:1;border:0;border-radius:999px;padding:9px 6px;font-size:13.5px;font-weight:700;color:var(--ln-gray);background:none;font-family:inherit}
+.bform .bkind .tbtn.on{background:#fff;color:var(--ln-ink);box-shadow:0 1px 3px rgba(0,0,0,.08)}
+.bform .bcheck{display:flex!important;align-items:center;gap:8px;margin:2px 0 14px;font-size:14px!important;color:var(--ln-ink)!important;font-weight:500}
+.bform .bcheck input{width:auto;margin:0!important}
+.bpicwrap{border-top:.5px solid var(--ln-line);padding-top:14px;margin-top:2px;gap:10px}
+.bpicwrap .pbtn{display:inline-flex;align-items:center;height:36px;padding:0 14px;border-radius:999px;background:#fff;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.14);font-size:13px;font-weight:700;cursor:pointer;color:var(--ln-ink)}
+.bpicnote{font-size:11.5px;color:var(--ln-gray);width:100%}
+.bsave{margin-top:14px}
+.bsave>.btn.o{width:100%;height:44px;border-radius:999px;font-size:15px;background:var(--ln-orange);color:#fff;border:0}
+#p-ex .bhead>.btn.o,#p-kb .bhead>.btn.o,#p-gv .bhead>.btn.o{margin:0 0 12px}
+.bfilt{margin:4px 0 12px}
