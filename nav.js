@@ -251,6 +251,20 @@ function renderJuken(){
 }
 window.renderJuken=renderJuken; window.renderHome=renderHome;
 
+/* ---------- 時間割の列の右端に「さがす」 ---------- */
+(function(){ const bar=document.querySelector('#p-tt .ttbar'); if(!bar || bar.querySelector('.ttfind')) return;
+  const b=document.createElement('button'); b.type='button'; b.className='chipg ttfind'; b.innerHTML=I.find+'さがす'; b.onclick=()=>window.go('find');
+  const v=document.getElementById('ttview'); if(v) v.insertAdjacentElement('afterend',b); else bar.appendChild(b); })();
+
+/* ---------- ボードが中身を描き直しても、知るの見出し・チップ・AI相談を戻す ---------- */
+(function(){
+  if(!('MutationObserver' in window)) return;
+  KNOW.forEach(p=>{ const el=document.getElementById('p-'+p); if(!el) return;
+    new MutationObserver(()=>{ if(!el.querySelector('.lk.know')) mountKnow(p); if((p==='ry'||p==='sk') && !el.querySelector('.lai')) mountAI(p); }).observe(el,{childList:true}); });
+  const ar=document.getElementById('p-ar'); if(ar) new MutationObserver(()=>{ if(!ar.querySelector('.lk.news')) mountNews(); }).observe(ar,{childList:true});
+})();
+
+/* ---------- 起動 ---------- */
 document.body.classList.add('role-student');
 buildNav(); placeBack(); paintChip();
 /* 8MB の JS が届く前に、ホームだけ先に描いておく */
