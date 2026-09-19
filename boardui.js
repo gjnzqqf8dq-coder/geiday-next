@@ -34,14 +34,10 @@ const BOARDS={
      同じ気分で開くところだから。並びは日付順で、両方が混ざって出る。 */
   ex:{
     key:'geidai_exhib_v1',
-    dummy:()=> [
-      ...((typeof DUMMY_EXHIB!=='undefined'?DUMMY_EXHIB:[]).map(x=>({...x,_t:'展示'}))),
-      ...((typeof DUMMY_KOUHYO!=='undefined'?DUMMY_KOUHYO:[]).map(x=>({...x,_t:'講評'}))),
-    ],
-    title:'展示・講評',
-    lead:'学内・学外の展示と、講評の日程。日付の近い順に並びます。',
-    filters:[{k:'t',label:'種類',opts:['展示','講評']},
-             {k:'when',label:'いつ',opts:['これから','開催中','終わった']}],
+    dummy:()=> ((typeof DUMMY_EXHIB!=='undefined'?DUMMY_EXHIB:[]).map(x=>({...x,_t:'展示'}))),
+    title:'展示',
+    lead:'学内・学外の展示。日付の近い順に並びます。',
+    filters:[{k:'when',label:'いつ',opts:['これから','開催中','終わった']}],
     /* 終わったものが上に来ても仕方がない。
        これから・開催中を先に、その中で日付の近い順。 */
     sort:(a,b)=>{
@@ -58,16 +54,11 @@ const BOARDS={
       return done(a)-done(b) || pic(a)-pic(b) || key(a).localeCompare(key(b));
     },
     /* 出すときは、まず展示か講評かを選ぶ。聞くことが違う。 */
-    kinds:['展示','講評'],
-    fieldsFor(k){ return k==='講評' ? this.fieldsKouhyo : this.fieldsExhib; },
     fieldsExhib:[
       {k:'title',t:'展示の名前',type:'text',req:true,max:40},
       {k:'who',t:'誰の展示',type:'text',max:30,ph:'例）デザイン科 有志'},
-      {k:'from',t:'はじまる日',type:'date',req:true},
-      {k:'to',t:'おわる日',type:'date',req:true},
-      {k:'bld',t:'会場（学内なら）',type:'bld'},
-      {k:'place',t:'会場（学外なら）',type:'text',max:40},
-      {k:'free',t:'誰でも入れる',type:'check'},
+      {k:'__span',t:'期間',type:'span',req:true},
+      {k:'place',t:'会場',type:'text',max:40,ph:'例）陳列館 / 3331'},
       {k:'body',t:'ひとこと',type:'area',max:140},
       {k:'url',t:'リンク',type:'url',ph:'https://'},
     ],
@@ -95,12 +86,10 @@ const BOARDS={
       const st=x.from>TODAY?'これから':(x.to>=TODAY?'開催中':'終わった');
       return {tag:st, tagCls:st==='開催中'?'live':(st==='これから'?'soon':'past'),
         head:x.title, sub:[x.who,x.bld?bldName(x.bld):x.place].filter(Boolean).join(' ／ '),
-        meta:`${x.from} 〜 ${x.to}${x.free?' ／ 誰でも入れる':''}`, body:x.body, url:x.url};
+        meta:`${x.from} 〜 ${x.to}`, body:x.body, url:x.url};
     },
     match(x,f){
-      if(f.t && f.t!==x._t) return false;
       if(!f.when) return true;
-      if(x._t==='講評') return f.when==='終わった' ? (x.date||'')<TODAY : (x.date||'')>=TODAY;
       const st=x.from>TODAY?'これから':(x.to>=TODAY?'開催中':'終わった');
       return f.when===st;
     },
@@ -202,7 +191,7 @@ function render(id){
   el.innerHTML=`
     <div class="bhead">
       <div><h2>${B0.title}</h2><p>${B0.lead}</p></div>
-      <button class="btn o" id="${id}-new">${st.open?'やめる':'書く'}</button>
+      ${id==='kb'?'':`<button class="btn o" id="${id}-new">${st.open?'やめる':'書く'}</button>`}
     </div>
     ${st.open?formHTML(id):''}
     <!-- 絞り込みはセレクト1本ずつ。ボタンを並べると
@@ -219,7 +208,7 @@ function render(id){
     ${B0.note?`<div class="bnote">${B0.note}</div>`:''}
 `;
 
-  document.getElementById(id+'-new').onclick=()=>{st.open=!st.open;render(id);};
+  const nb=document.getElementById(id+'-new'); if(nb) nb.onclick=()=>{st.open=!st.open;render(id);};
   el.querySelectorAll('.bfilt .fsel').forEach(sel=>sel.onchange=()=>{
     st.f[sel.dataset.f]=sel.value; render(id);});
   /* 消す・終わった は「手元の写し」と「サーバ写し(geiday_srv_v1)」の両方を直す。
@@ -378,6 +367,8 @@ function formHTML(id){
     if(f.type==='sel')   return `<label>${f.t}${f.req?' <i>必須</i>':''}
       <select id="${n}"><option value="">選ぶ</option>${f.opts.map(o=>`<option>${esc(o)}</option>`).join('')}</select></label>`;
     if(f.type==='bld')   return `<label>${f.t}<select id="${n}">${bldOpts()}</select></label>`;
+    if(f.type==='span')  return `<label class="bspan">${f.t}${f.req?' <i>必須</i>':''}
+      <span class="bspanrow"><input type="date" id="${id}-from"><em>〜</em><input type="date" id="${id}-to"></span></label>`;
     const t=f.type==='date'?'date':f.type==='num'?'number':f.type==='url'?'url':'text';
     return `<label>${f.t}${f.req?' <i>必須</i>':''}
       <input type="${t}" id="${n}" ${f.max?`maxlength="${f.max}"`:''} placeholder="${esc(f.ph||'')}"></label>`;
@@ -425,12 +416,19 @@ function submit(id){
      読みに行くと、要る項目が空だと言われて出せなくなる。 */
   const FS = B0.fieldsFor ? B0.fieldsFor(state[id].kind) : B0.fields;
   for(const f of FS){
+    if(f.type==='span'){                       /* 期間＝はじまる日・おわる日の2つで1行 */
+      const a=document.getElementById(id+'-from'), b=document.getElementById(id+'-to');
+      if(!a||!b) continue;
+      v.from=a.value.trim(); v.to=b.value.trim();
+      if(f.req && (!v.from||!v.to)){ alert('期間を入れてください。'); (v.from?b:a).focus(); return; }
+      continue;
+    }
     const el=document.getElementById(id+'-'+f.k);
     if(!el) continue;
     v[f.k]= f.type==='check' ? el.checked : el.value.trim();
     if(f.req && !v[f.k]){ alert(f.t+'を入れてください。'); el.focus(); return; }
   }
-  if(B0.kinds) v._t = state[id].kind;
+  if(B0.kinds) v._t = state[id].kind; else if(id==='ex') v._t='展示';
   if(v.url && !/^https?:\/\//i.test(v.url)){ alert('リンクは http:// か https:// から始めてください。'); return; }
   if(v.from && v.to && v.from>v.to){ alert('おわる日が、はじまる日より前になっています。'); return; }
   const m=mineOf(id);

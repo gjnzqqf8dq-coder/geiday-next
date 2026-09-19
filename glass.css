@@ -337,3 +337,51 @@ body.mapfull main{max-width:640px;padding:6px 14px calc(env(safe-area-inset-bott
 .bsave>.btn.o{width:100%;height:44px;border-radius:999px;font-size:15px;background:var(--ln-orange);color:#fff;border:0}
 #p-ex .bhead>.btn.o,#p-kb .bhead>.btn.o,#p-gv .bhead>.btn.o{margin:0 0 12px}
 .bfilt{margin:4px 0 12px}
+/* ニュースのタグチップ */
+#artags{margin-bottom:14px}
+#artags small{font-weight:500;opacity:.55;font-size:11.5px;margin-left:5px;font-variant-numeric:tabular-nums}
+#p-ar .arlist{border-top:0;margin-top:0}
+#p-ar .arrow2{grid-template-columns:78px 1fr auto;gap:12px}
+#p-ar .arthumb{width:78px;height:60px;border-radius:10px}
+#p-ar .arthumb img{width:100%;height:100%;object-fit:cover}
+#p-ar .argo{display:none}
+@media(max-width:700px){ #p-ar .arrow2{grid-template-columns:70px 1fr;gap:10px} #p-ar .arthumb{width:70px;height:54px} #p-ar .artag{grid-column:2;justify-self:start;margin-top:4px} }
+
+/* ============ 2026-09-20 夜：ホーム全部入り・フォント統一 ============ */
+/* 既存ページもLINEの書体・寸法に揃える（ページごとに別サイトに見えるのを止める） */
+main, main input, main select, main textarea, main button, main h1, main h2, main h3, main h4,
+main p, main span, main div, main a, main li, main td, main th, main label, main small, main b, main em{
+  font-family:var(--ln-font)}
+main h2{letter-spacing:-.01em}
+main .mincho{font-weight:700;letter-spacing:-.01em}
+/* ヘッダ右のSNS */
+.lsns{display:flex;gap:2px;align-items:center;margin-left:auto}
+.lsns a{width:40px;height:40px;border-radius:50%;display:grid;place-items:center;color:var(--ln-ink);text-decoration:none;transition:transform .35s var(--gl-spring)}
+.lsns a:active{transform:scale(.88);transition:transform .07s}
+.lsns svg{width:20px;height:20px}
+/* ホーム：カードを3列で全部並べる */
+.lh .lrow{grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:0}
+.lcard.sq{min-height:132px;padding:14px 8px 12px;justify-content:flex-start}
+.lcard.sq .ltile{width:50px;height:50px;border-radius:15px}
+.lcard.sq .ltile svg{width:27px;height:27px}
+.lcard.sq>b{margin:10px 0 2px;font-size:14px}
+.lcard.sq small{font-size:11.5px;line-height:1.4;display:block;padding:0 2px}
+/* 「‹ ホーム」が見出しに重なる問題：流れの中に置き、下に余白 */
+#gback{margin:2px 0 12px}
+body.rsfull #gback,body.mapfull #gback{position:relative;left:auto;top:auto;z-index:auto;margin:2px 0 12px}
+body.rsfull main,body.mapfull main{max-width:640px;margin:0 auto;padding:6px 14px calc(env(safe-area-inset-bottom) + 118px)}
+#p-rs .bhead{display:block;border-bottom:0;padding-bottom:8px}
+#p-rs .bhead>div{margin-bottom:10px}
+#p-rs .bhead h2{font-size:26px;font-weight:800}
+#p-rs .bhead p{font-size:12.5px;color:var(--ln-gray)}
+#p-rs .bhead>.btn.o{background:#fff;color:var(--ln-ink);border:0;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.14);border-radius:999px;padding:9px 16px}
+#p-rs .rsel{width:100%;box-sizing:border-box;border:0;border-radius:999px;background:#fff;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.14);padding:11px 16px;font-size:15px;font-weight:600}
+#p-rs .rframe{border-radius:var(--ln-r);overflow:hidden;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.09);background:#fff;margin-top:10px}
+#p-rs .rlink{margin-top:16px}
+/* 留学・就活・公募の中の既存カード類をLINE寄りに */
+#p-ry .rycard,#p-ry table,#p-sk table{font-family:var(--ln-font)}
+#p-ry h3,#p-sk h3{font-size:16px;font-weight:700;letter-spacing:-.01em}
+/* 期間＝1行に2つのカレンダー */
+.bform .bspan .bspanrow{display:flex;align-items:center;gap:8px;margin-top:5px}
+.bform .bspan .bspanrow input{margin-top:0;flex:1;min-width:0}
+.bform .bspan em{font-style:normal;color:var(--ln-gray);flex:none}
