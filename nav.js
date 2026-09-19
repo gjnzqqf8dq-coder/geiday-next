@@ -22,7 +22,7 @@ const I={
   know:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5c-1.6-1.3-3.8-1.8-7.5-1.8v13c3.7 0 5.9.5 7.5 1.8 1.6-1.3 3.8-1.8 7.5-1.8v-13c-3.7 0-5.9.5-7.5 1.8z"/><path d="M12 6.5v13"/></svg>',
   news:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M7 9h4.5M7 12.5h10M7 16h10M14 9h3"/></svg>',
   amc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 9.5 12 4l8.5 5.5H3.5z"/><path d="M5.5 9.5v7M10 9.5v7M14 9.5v7M18.5 9.5v7M3.5 19.5h17"/></svg>',
-  kobo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 6.5a4 4 0 0 0 5 5l-9 9-3.5-3.5 9-9z"/><path d="M14.5 6.5 19.5 11.5"/></svg>',
+  kobo:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8.5 4.5 17.5l2 2 9-9"/><path d="M11.5 6.5l2.5-2.5 6 6-2.5 2.5z"/><path d="M15 3.5l1.5 1.5"/></svg>',
   ar:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5c-1.6-1.3-3.8-1.8-7.5-1.8v13c3.7 0 5.9.5 7.5 1.8 1.6-1.3 3.8-1.8 7.5-1.8v-13c-3.7 0-5.9.5-7.5 1.8z"/><path d="M12 6.5v13"/></svg>',
   ex:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M7 9h4.5M7 12.5h10M7 16h10M14 9h3"/></svg>',
   find:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>',
@@ -102,12 +102,11 @@ window.geidayPaintChip=paintChip;
 
 /* ---------- 下のタブバー ---------- */
 const bar=document.getElementById('gbar'), lens=document.getElementById('glens');
-function tabW(){ const vw=Math.min(innerWidth,560); return Math.max(64,Math.min(84,Math.floor((vw-28-12)/TABS.length))); }
+function tabW(){ const t=bar.querySelector('.gtab'); if(t && t.offsetWidth) return t.offsetWidth; const vw=Math.min(innerWidth,560); return Math.floor((vw-32-12)/TABS.length); }
 function buildNav(){
-  document.documentElement.style.setProperty('--tw',tabW()+'px');
   bar.querySelectorAll('.gtab').forEach(x=>x.remove());
   TABS.forEach(t=>{ const b=document.createElement('button'); b.type='button'; b.className='gtab'; b.dataset.p=t.id; b.innerHTML=I[t.id]+'<b>'+esc(t.l)+'</b>'; bar.appendChild(b); });
-  requestAnimationFrame(()=>sync(cur));
+  requestAnimationFrame(()=>{ document.documentElement.style.setProperty('--tw',tabW()+'px'); sync(cur); });
 }
 function lensX(x){ lens.style.transform='translateX('+x+'px)'; lens.style.setProperty('--lx',(-x*.38)+'px'); }
 function lensTo(i){ lensX(i*tabW()); }
@@ -156,6 +155,23 @@ function ttCount(){
   let tt={}; try{ tt=JSON.parse(localStorage.getItem('geidai_tt_v1')||'{}')||{}; }catch(e){}
   return Object.keys(tt).length;
 }
+function todayCard(){
+  if(typeof byKey==='undefined' || typeof ttk!=='function' || typeof DATA==='undefined' || !DATA) return '';
+  let tt={}; try{ tt=JSON.parse(localStorage.getItem('geidai_tt_v1')||'{}')||{}; }catch(e){}
+  const d=['日','月','火','水','木','金','土'][new Date().getDay()];
+  const t=(typeof term==='string')?term:'前期';
+  const PT=(typeof PTIME!=='undefined')?PTIME:{};
+  const rows=[];
+  for(let p=1;p<=6;p++){ const v=tt[ttk(t,d,p)]; const c=v&&byKey[v]; if(c) rows.push([p,c]); }
+  const md=(new Date().getMonth()+1)+'/'+new Date().getDate();
+  let h='<div class="lcard wide lwide today"><b>今日 <span class="ld">'+md+'（'+d+'）</span></b><div class="lrows">';
+  if(d==='日'||d==='土'||!rows.length){
+    h+='<div class="lempty">'+(rows.length||d==='日'||d==='土'?'今日は授業がありません':'時間割が空です。「さがす」から入れられます')+'</div>';
+  }else{
+    h+=rows.map(([p,c])=>'<button type="button" class="lr" data-p="tt"><span class="lp"><b>'+p+'限</b><small>'+esc(PT[p]||'')+'</small></span><span class="lt"><span class="ttl">'+esc(c.title)+'</span><small>'+esc(c.teacher||'')+'</small></span><span class="chev">'+I.chev+'</span></button>').join('');
+  }
+  return h+'</div></div>';
+}
 function homeCards(){
   const r=role||'student';
   const n=ttCount(), nt=(typeof TEACHERS!=='undefined'&&TEACHERS.length)?TEACHERS.length+'人':'';
@@ -171,7 +187,7 @@ function homeCards(){
     '<button type="button" class="lr" data-p="'+p+'"><span class="ltile s">'+I[ic||p]+'</span><span>'+esc(l)+'</span><span class="chev">'+I.chev+'</span></button>').join('')+'</div></div>';
   if(r==='juken') return '<div class="lrow">'+c.jk+c.map+c.tea+'</div>'+rows('見る',[['ex','展示・講評'],['kb','公募']])+featJk();
   if(r==='guest') return '<div class="lrow">'+c.ex+c.map+c.tea+'</div>'+rows('見る',[['kb','公募'],['art','アーティスト']]);
-  return '<div class="lrow">'+c.tt+c.map+c.tea+'</div>'+rows('予約',[['rs','AMC','amc'],['rs','工房','kobo']])+featJk();
+  return todayCard()+'<div class="lrow">'+c.tt+c.map+c.tea+'</div>'+rows('予約',[['rs','AMC','amc'],['rs','工房','kobo']])+featJk();
 }
 function featJk(){
   if(typeof JUKEN_POSTS==='undefined') return '';
@@ -195,12 +211,14 @@ function mountKnow(p){
     k.querySelectorAll('.lchips button').forEach(b=>b.onclick=()=>window.go(b.dataset.p));
     el.insertBefore(k,el.firstChild); }
   k.querySelectorAll('.lchips button').forEach(b=>b.classList.toggle('on',b.dataset.p===p));
+  const w=el.querySelector('.bhead .btn.o'); if(w && !w.classList.contains('chipg')){ w.classList.add('chipg','write'); k.querySelector('.ltitle').insertBefore(w,k.querySelector('.lcirc')); }
 }
 /* ---------- ニュース＝GEIDAYの記事 ---------- */
 function mountNews(){
   const el=document.getElementById('p-ar'); if(!el || el.querySelector('.lk.news')) return;
   const k=document.createElement('div'); k.className='lk news';
   k.innerHTML='<div class="ltitle"><h2>ニュース</h2></div>';
+  const q=el.querySelector('.bhead .btn.o'); if(q){ q.classList.add('chipg','ask'); k.querySelector('.ltitle').appendChild(q); }
   el.insertBefore(k,el.firstChild);
 }
 

@@ -191,3 +191,48 @@ body.mapfull #gedge,body.rsfull #gedge{display:none}
 
 @media(max-width:400px){ .lrow{gap:8px} .lcard.sq{padding:14px 8px 10px} }
 @media(min-width:821px){ .lh,.lk{max-width:720px} main{padding-top:14px} }
+
+/* ============ ブラッシュアップ（2026-09-19 夜） ============ */
+/* ページ切替に薄いフェード＋浮き上がり */
+@keyframes paneIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.pane.on{animation:paneIn .28s var(--gl-ease) both}
+body.mapfull .pane.on{animation:none}
+/* 今日の授業 */
+.lcard.today>b .ld{font-weight:500;color:var(--ln-gray);font-size:13px;margin-left:6px}
+.lempty{padding:14px 0 12px;font-size:13.5px;color:var(--ln-gray);font-weight:500}
+.lr .lp{display:flex;flex-direction:column;align-items:center;width:44px;flex:none;line-height:1.15}
+.lr .lp b{font-size:13px;font-weight:700;color:var(--ln-blue)}
+.lr .lp small{font-size:10.5px;color:var(--ln-gray);font-weight:500;margin-top:2px}
+.lr .lt{display:flex;flex-direction:column;min-width:0;gap:2px}
+.lr .lt .ttl{font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.lr .lt small{margin:0;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* 見出し行に入れた「書く」「質問する」 */
+.ltitle .chipg.write,.ltitle .chipg.ask{margin-left:auto;margin-right:8px;background:var(--ln-orange);color:#fff;box-shadow:none;height:36px;padding:0 14px;font-size:13px}
+.ltitle .chipg.ask{margin-right:0}
+#p-ar .bhead{display:none}
+#p-ex .bhead>div,#p-kb .bhead>div,#p-gv .bhead>div{display:none}
+#p-ex .bhead,#p-kb .bhead,#p-gv .bhead{padding:0;margin:0}
+/* ボードの項目を白カード＋髪の毛の線に。バッジは青／オレンジ */
+#p-ex .bitem,#p-kb .bitem,#p-gv .bitem{background:#fff;border-radius:var(--ln-r);box-shadow:inset 0 0 0 .5px rgba(0,0,0,.09);font-family:var(--ln-font)}
+#p-ex .bitem[data-open]:hover,#p-kb .bitem[data-open]:hover,#p-gv .bitem[data-open]:hover{background:#fff}
+#p-ex .bitem:active,#p-kb .bitem:active,#p-gv .bitem:active{transform:scale(.985)}
+.btag{border-radius:999px;padding:3px 9px;font-size:11px}
+.btag.live{background:var(--ln-orange);color:#fff}
+.btag.soon{background:var(--ln-blue);color:#fff}
+.btag.past{box-shadow:inset 0 0 0 .5px rgba(0,0,0,.18);color:var(--ln-gray)}
+/* 記事の行：白カード化 */
+#p-ar .arlist{border-top:0;margin-top:4px;display:grid;gap:10px}
+#p-ar .arrow2{background:#fff;border-radius:var(--ln-r);box-shadow:inset 0 0 0 .5px rgba(0,0,0,.09);padding:12px 14px;border-bottom:0;font-family:var(--ln-font);transition:transform .35s var(--gl-spring)}
+#p-ar .arrow2:active{transform:scale(.985)}
+#p-ar .arthumb{border-radius:12px;background:var(--ln-tint)}
+#p-ar .arttl{font-size:15px;line-height:1.5}
+#p-ar .artag{border-radius:999px;background:var(--ln-tint);color:var(--ln-blue);border:0}
+/* 既存ページの操作部品をピル型に寄せる（さがす・時間割・教員・アーティスト・予約） */
+main .fsel,main .ttg,main select.ttg{border-radius:999px;background-color:#fff;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.14);font-family:var(--ln-font);font-weight:600;color:var(--ln-ink)}
+main .fsel:hover{background-color:#fff}
+main .seg{border:0;border-radius:999px;background:var(--ln-fill);padding:3px;gap:2px}
+main .seg button,main .seg .on{border-radius:999px}
+main .btn{border-radius:999px;font-family:var(--ln-font);font-weight:700}
+main .btn.o{background:var(--ln-orange);border-color:var(--ln-orange);color:#fff}
+main .more{border-radius:999px;font-family:var(--ln-font);font-weight:700}
+#p-find #q{font-family:var(--ln-font)}
