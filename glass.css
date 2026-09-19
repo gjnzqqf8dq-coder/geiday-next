@@ -416,3 +416,13 @@ main li>*,main .trow>*,main .bitem>*,main .arrow2>*,main .lr>*{min-width:0}
 /* ニュース：カテゴリーはセレクト1本（横スクロールのチップをやめた） */
 #p-ar .abar{display:flex;gap:8px;align-items:center;margin:0 0 14px}
 #p-ar .abar .acnt{margin-left:auto;font-size:12.5px;color:var(--ln-gray);font-weight:500}
+/* AIに相談 */
+.lcard.sq.ai .ltile{background:var(--ln-ink);color:#fff}
+.sdg2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(min-width:700px){ .sdg2{grid-template-columns:repeat(3,1fr)} }
+.sdc{display:block;text-decoration:none;color:inherit;padding:13px 14px;position:relative}
+.sdc .sdgp{display:inline-block;font-size:10.5px;font-weight:700;color:var(--ln-blue);background:var(--ln-tint);border-radius:999px;padding:2px 9px;margin-bottom:8px}
+.sdc b{display:block;font-size:14.5px;font-weight:700;letter-spacing:-.01em;line-height:1.45}
+.sdc small{display:block;font-size:11.5px;color:var(--ln-gray);margin-top:4px;line-height:1.55;font-weight:500}
+#sdg{margin-bottom:14px}
+#sdg small{font-weight:500;opacity:.55;font-size:11.5px;margin-left:5px;font-variant-numeric:tabular-nums}

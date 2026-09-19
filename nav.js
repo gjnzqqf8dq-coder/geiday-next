@@ -9,16 +9,17 @@
 (function(){
 const KEY='geiday.role';
 const ROLES={student:'藝大生',juken:'受験生',guest:'学外の人'};
-const NAME={find:'さがす',tt:'時間割',map:'校内地図',tea:'教員',art:'アーティスト',rs:'予約',ex:'展示',
+const NAME={ai:'AIに相談',find:'さがす',tt:'時間割',map:'校内地図',tea:'教員',art:'アーティスト',rs:'予約',ex:'展示',
   kb:'公募',gv:'譲り合い',ry:'留学',sk:'就活',ar:'記事',jk:'受験生へ',acc:'アカウント',home:'ホーム'};
 const TABS=[{id:'home',l:'ホーム'},{id:'art',l:'つながる'},{id:'know',l:'知る'},{id:'news',l:'ニュース'}];
 const UNDER={home:'home',tt:'home',find:'home',map:'home',tea:'home',rs:'home',acc:'home',
-  art:'art', ex:'know',kb:'know',gv:'know',ry:'know',sk:'know',jk:'know', ar:'news'};
+  ai:'home', art:'art', ex:'know',kb:'know',gv:'know',ry:'know',sk:'know',jk:'know', ar:'news'};
 const KNOW=['ex','kb','ry','sk','jk'];   /* 「知る」のチップ */
 const ENTRY={home:'home',art:'art',know:null,news:'ar'};
 const I={
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11.5 12 4l8.5 7.5"/><path d="M6 10v9.5h12V10"/><path d="M10 19.5v-5h4v5"/></svg>',
   art:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c.8-3 2.9-4.6 5.5-4.6s4.7 1.6 5.5 4.6"/><circle cx="16.5" cy="9.5" r="2.4"/><path d="M15.5 14.2c2.6 0 4.3 1.5 5 4.3"/></svg>',
+  ai2:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l1.6 4.2 4.2 1.6-4.2 1.6L12 15.1l-1.6-4.2-4.2-1.6 4.2-1.6z"/><path d="M18.5 14.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/><path d="M5 16l.6 1.4L7 18l-1.4.6L5 20l-.6-1.4L3 18l1.4-.6z"/></svg>',
   know:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 6.5c-1.6-1.3-3.8-1.8-7.5-1.8v13c3.7 0 5.9.5 7.5 1.8 1.6-1.3 3.8-1.8 7.5-1.8v-13c-3.7 0-5.9.5-7.5 1.8z"/><path d="M12 6.5v13"/></svg>',
   news:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M7 9h4.5M7 12.5h10M7 16h10M14 9h3"/></svg>',
   amc:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 9.5 12 4l8.5 5.5H3.5z"/><path d="M5.5 9.5v7M10 9.5v7M14 9.5v7M18.5 9.5v7M3.5 19.5h17"/></svg>',
@@ -55,6 +56,7 @@ const main=document.querySelector('main');
 const mk=(tag,id,cls)=>{ const e=document.createElement(tag); if(id) e.id=id; if(cls) e.className=cls; return e; };
 const secHome=mk('section','p-home','pane'); main.appendChild(secHome);
 const secJk=mk('section','p-jk','pane'); main.appendChild(secJk);
+const secAi=mk('section','p-ai','pane'); main.appendChild(secAi);
 const back=mk('button','gback'); back.type='button'; main.insertBefore(back,main.firstChild);
 const lhead=mk('div','lhead');
 lhead.innerHTML='<button type="button" class="lchip" id="lchip"><span class="av"></span><b>Geiday</b></button>'+
@@ -126,7 +128,7 @@ function wrapGo(){
   if(typeof window.go!=='function' || window.go.__line) return false;
   const orig=window.go;
   const w=function(p){ const prev=cur;
-    if(p==='home') renderHome(); if(p==='jk') renderJuken(); if(KNOW.includes(p)) knowKind=p;
+    if(p==='home') renderHome(); if(p==='jk') renderJuken(); if(p==='ai') renderSoudan(); if(KNOW.includes(p)) knowKind=p;
     orig(p);
     document.body.classList.remove('mapfull');
     if(KNOW.includes(p)) mountKnow(p); if(p==='ar') mountNews(); if(AIP[p]) mountAI(p);
@@ -153,8 +155,9 @@ function homeCards(){
     ['ry','留学',     '交換・一般'],
     ['sk','就活',     '進路のデータ'],
     ['jk','受験生',   '美大受験のこと'],
+    ['ai','AIに相談', '悩みを選ぶだけ'],
   ];
-  const sq=([p,title,sub])=>'<button type="button" class="lcard sq" data-p="'+p+'"><span class="ltile">'+I[p]+'</span><b>'+esc(title)+'</b>'+(sub?'<small>'+esc(sub)+'</small>':'')+'</button>';
+  const sq=([p,title,sub])=>'<button type="button" class="lcard sq'+(p==='ai'?' ai':'')+'" data-p="'+p+'"><span class="ltile">'+(I[p]||I.ai2)+'</span><b>'+esc(title)+'</b>'+(sub?'<small>'+esc(sub)+'</small>':'')+'</button>';
   return '<div class="lrow">'+C.map(sq).join('')+'</div>';
 }
 function renderHome(){
@@ -206,6 +209,30 @@ function mountNews(){
     if(d>0 && scrollY<=0){ pulling=true; main.style.transition=chip.style.transition=clu.style.transition=''; set(rubber(d,160)); } },{passive:true});
   document.addEventListener('touchend',()=>{ if(pulling) reset(); y0=null; pulling=false; },{passive:true});
 })();
+
+/* ---------- AIに相談：悩みを選ぶ ---------- */
+let soudanGroup='';
+function renderSoudan(){
+  if(typeof SOUDAN_THEMES==='undefined'){ secAi.innerHTML='<p class="jkl">読み込めませんでした。</p>'; return; }
+  const T=SOUDAN_THEMES;
+  const groups=[...new Set(T.map(x=>x.group))];
+  const list=T.filter(x=>!soudanGroup||x.group===soudanGroup);
+  secAi.innerHTML='<div class="lk">'+
+    '<div class="ltitle"><h2>AIに相談</h2></div>'+
+    '<p class="jkl">選ぶとChatGPTが開いて、そのまま相談が始まります。1問ずつ聞かれて、最後に今週やることが3つ出ます。</p>'+
+    '<div class="lchips" id="sdg">'+
+      '<button type="button" class="'+(soudanGroup?'':'on')+'" data-g="">すべて<small>'+T.length+'</small></button>'+
+      groups.map(g=>'<button type="button" class="'+(soudanGroup===g?'on':'')+'" data-g="'+esc(g)+'">'+esc(g)+'<small>'+T.filter(x=>x.group===g).length+'</small></button>').join('')+
+    '</div>'+
+    '<div class="sdg2">'+list.map(x=>
+      '<a class="lcard sdc" href="https://chatgpt.com/?q='+encodeURIComponent(x.prompt)+'" target="_blank" rel="noopener noreferrer">'+
+      '<span class="sdgp">'+esc(x.group)+'</span><b>'+esc(x.title)+'</b><small>'+esc(x.sub)+'</small></a>').join('')+'</div>'+
+    '<p class="jknote">相談の内容はGEIDAYには残りません。ChatGPTとのやりとりになります。'+
+      'つらさが強いときは、藝大の学生相談室（student-counselling@ml.geidai.ac.jp）や保健管理センター（050-5525-2456）にも行けます。</p>'+
+    '</div>';
+  secAi.querySelectorAll('#sdg button').forEach(b=>b.onclick=()=>{ soudanGroup=b.dataset.g; renderSoudan(); scrollTo({top:0}); });
+}
+window.renderSoudan=renderSoudan;
 
 /* ---------- 受験生へ ---------- */
 let jkFilter='すべて';
