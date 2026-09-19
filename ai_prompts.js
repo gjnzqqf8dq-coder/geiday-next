@@ -7,7 +7,7 @@
    knowledge には、こちらで調べた事実を入れて渡す（ChatGPTが調べ直す手間を省く）。
    ============================================================ */
 const AI_KNOWLEDGE = {
-  jk:'',   /* 美大受験ナレッジ（research/美大受験ナレッジ.md の要点を入れる） */
+  get jk(){ return (typeof JUKEN_KNOWLEDGE_SHORT==='string')?JUKEN_KNOWLEDGE_SHORT:''; },
   sk:'',   /* 藝大の進路データ */
   ry:''    /* 藝大の留学制度 */
 };
@@ -111,15 +111,16 @@ const AI_PROMPTS = {
 ].join('\n') + AI_CLOSING
 };
 
-/* ChatGPT を開く。q= に入れると入力欄まで入る（送信は本人が1タップ）。
-   長すぎると URL が落ちる端末があるので、knowledge は入るぶんだけ足す。 */
+/* ChatGPT を開く。`?q=` に入れると **そのまま送信される**（2026-09-20 実機で確認。
+   17KB のプロンプトでも通った）。`&hints=search` を付けると送信されず入力欄に入るだけになるので付けない。
+   長すぎる URL を嫌う端末があるかもしれないので、knowledge は入るぶんだけ足す。 */
 function aiURL(kind){
   const base=AI_PROMPTS[kind]||'';
   const k=(AI_KNOWLEDGE[kind]||'').trim();
   let body=base;
   if(k){
     const withK=base+'\n\n【参考にしてよい事実（GEIDAY調べ。古い可能性があるので、重要な数字は必ず出典で確認すること）】\n'+k;
-    if(encodeURIComponent(withK).length<7000) body=withK;
+    if(encodeURIComponent(withK).length<24000) body=withK;
   }
   return 'https://chatgpt.com/?q='+encodeURIComponent(body);
 }

@@ -186,7 +186,7 @@ function mountAI(p){
   const el=document.getElementById('p-'+p); if(!el || el.querySelector('.lai')) return;
   const a=document.createElement('a'); a.className='lcard lai'; a.target='_blank'; a.rel='noopener noreferrer';
   a.href=(typeof aiURL==='function')?aiURL(p):'https://chatgpt.com/';
-  a.innerHTML='<span class="ltile">'+I.ai+'</span><span><b>AIに相談する</b><small>'+esc(AILABEL[p]||'')+'。ChatGPTが開くので、送信ボタンを押してください</small></span><span class="chev">'+I.chev+'</span>';
+  a.innerHTML='<span class="ltile">'+I.ai+'</span><span><b>AIに相談する</b><small>'+esc(AILABEL[p]||'')+'。ChatGPTが開いて、そのまま始まります</small></span><span class="chev">'+I.chev+'</span>';
   const k=el.querySelector('.lk.know'); if(k) k.insertAdjacentElement('afterend',a); else el.insertBefore(a,el.firstChild);
 }
 /* ---------- ニュース＝GEIDAYの記事 ---------- */

@@ -385,3 +385,24 @@ body.rsfull main,body.mapfull main{max-width:640px;margin:0 auto;padding:6px 14p
 .bform .bspan .bspanrow{display:flex;align-items:center;gap:8px;margin-top:5px}
 .bform .bspan .bspanrow input{margin-top:0;flex:1;min-width:0}
 .bform .bspan em{font-style:normal;color:var(--ln-gray);flex:none}
+/* 受験生：先に知っておくこと（開閉）＋ 9校の比較 */
+.jkfacts .lrows{margin:0}
+.jkf{display:block;width:100%;text-align:left;border:0;background:none;cursor:pointer;font-family:inherit;padding:13px 0;position:relative;color:var(--ln-ink)}
+.jkf+.jkf::before{content:"";position:absolute;left:0;right:0;top:0;height:.5px;background:var(--ln-line)}
+.jkfq{display:flex;align-items:flex-start;gap:10px}
+.jkfq b{font-size:14.5px;font-weight:700;line-height:1.55;letter-spacing:-.01em}
+.jkfq .chev{margin-left:auto;flex:none;color:var(--ln-blue);font-weight:700;font-size:17px;line-height:1.4;transition:transform .3s var(--gl-ease)}
+.jkf.on .jkfq .chev{transform:rotate(45deg)}
+.jkfa{display:none;margin-top:8px;font-size:13.5px;line-height:1.85;color:var(--ln-gray);font-weight:500}
+.jkf.on .jkfa{display:block}
+.jkg2{display:grid;gap:10px;grid-template-columns:1fr}
+@media(min-width:700px){ .jkg2{grid-template-columns:1fr 1fr} }
+.jksc{padding:14px}
+.jksc>b{display:block;font-size:15.5px;font-weight:700;letter-spacing:-.01em;line-height:1.5;margin-bottom:10px}
+.jksc>b em{font-style:normal;font-size:11.5px;font-weight:600;color:var(--ln-blue);background:var(--ln-tint);border-radius:999px;padding:2px 8px;margin-left:8px;white-space:nowrap}
+.jksc dl{margin:0;display:grid;grid-template-columns:72px 1fr;gap:6px 10px;align-items:start}
+.jksc dt{font-size:11.5px;font-weight:700;color:var(--ln-gray);padding-top:2px}
+.jksc dd{margin:0;font-size:13px;line-height:1.7}
+.jksc dd strong{font-weight:700;font-size:14px}
+.jksc dd small{display:block;font-size:11.5px;color:var(--ln-gray);margin-top:2px;line-height:1.6}
+.jksc .chipg{margin-top:12px;height:34px;font-size:12.5px;padding:0 14px}
