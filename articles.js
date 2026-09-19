@@ -142,5 +142,6 @@ function render(){
   if(sel) sel.onchange=()=>{ arTag=sel.value; render(); scrollTo({top:0}); };
 }
 window.renderArticles=render;
+window.ARTICLES=ARTICLES; window.ARTICLES_BASE=BASE;
 window.GEIDAY_SNS={...SNS, site:BASE};
 })();

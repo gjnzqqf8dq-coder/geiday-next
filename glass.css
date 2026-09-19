@@ -426,3 +426,23 @@ main li>*,main .trow>*,main .bitem>*,main .arrow2>*,main .lr>*{min-width:0}
 .sdc small{display:block;font-size:11.5px;color:var(--ln-gray);margin-top:4px;line-height:1.55;font-weight:500}
 #sdg{margin-bottom:14px}
 #sdg small{font-weight:500;opacity:.55;font-size:11.5px;margin-left:5px;font-variant-numeric:tabular-nums}
+
+/* ============ ホーム上部：流れる記事 ============ */
+.mq{position:relative;overflow:hidden;margin:0 -14px 14px;padding:2px 0;
+  -webkit-mask:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);
+  mask:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
+.mqt{display:flex;gap:10px;width:max-content;animation:mq 40s linear infinite;will-change:transform}
+@keyframes mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.mqi{flex:none;width:168px;text-decoration:none;color:inherit;display:block;
+  transition:transform .35s var(--gl-spring)}
+.mqi:active{transform:scale(.96);transition:transform .07s}
+.mqi img{width:168px;height:94px;object-fit:cover;border-radius:12px;display:block;background:var(--ln-fill);
+  box-shadow:inset 0 0 0 .5px rgba(0,0,0,.08)}
+.mqi span{display:block;margin-top:6px;font-size:11.5px;font-weight:600;line-height:1.45;color:var(--ln-ink);
+  overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;width:168px}
+@media(prefers-reduced-motion:reduce){
+  .mqt{animation:none}
+  .mq{overflow-x:auto;scrollbar-width:none;-webkit-mask:none;mask:none;padding-left:14px}
+  .mq::-webkit-scrollbar{display:none}
+}
+@media(min-width:700px){ .mq{margin-left:0;margin-right:0} }

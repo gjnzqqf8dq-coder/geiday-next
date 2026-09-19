@@ -160,8 +160,32 @@ function homeCards(){
   const sq=([p,title,sub])=>'<button type="button" class="lcard sq'+(p==='ai'?' ai':'')+'" data-p="'+p+'"><span class="ltile">'+(I[p]||I.ai2)+'</span><b>'+esc(title)+'</b>'+(sub?'<small>'+esc(sub)+'</small>':'')+'</button>';
   return '<div class="lrow">'+C.map(sq).join('')+'</div>';
 }
+/* 上を流れる記事。右から左へ。押すとその記事が開く。
+   仕組みは同じ並びを2本つなげて、半分ぶん動かして先頭へ戻すだけ。
+   指で触っているあいだは止まる。動きを減らす設定の人には流さない。 */
+function marquee(){
+  if(typeof ARTICLES==='undefined') return '';
+  const list=ARTICLES.filter(a=>a.pic);
+  if(list.length<3) return '';
+  const href=a=>a.url?a.url:((window.ARTICLES_BASE||'')+a.path);
+  const one=a=>'<a class="mqi" href="'+esc(href(a))+'" target="_blank" rel="noopener noreferrer">'+
+    '<img src="'+esc(a.pic)+'" alt="" loading="lazy" decoding="async">'+
+    '<span>'+esc(a.title)+'</span></a>';
+  const row=list.map(one).join('');
+  return '<div class="mq" id="mq"><div class="mqt">'+row+row+'</div></div>';
+}
 function renderHome(){
-  secHome.innerHTML='<div class="lh">'+homeCards()+'</div>';
+  secHome.innerHTML=marquee()+'<div class="lh">'+homeCards()+'</div>';
+  const t=secHome.querySelector('.mqt');
+  if(t){
+    /* 実寸を測ってから速さを決める。長さで速度が変わると気持ち悪い */
+    requestAnimationFrame(()=>{ const w=t.scrollWidth/2;
+      if(w>0) t.style.animationDuration=Math.round(w/26)+'s'; });
+    const mq=document.getElementById('mq');
+    const hold=v=>()=>{ t.style.animationPlayState=v?'paused':'running'; };
+    mq.addEventListener('pointerdown',hold(1)); mq.addEventListener('pointerup',hold(0));
+    mq.addEventListener('pointercancel',hold(0)); mq.addEventListener('pointerleave',hold(0));
+  }
   secHome.querySelectorAll('[data-p]').forEach(b=>b.addEventListener('click',e=>{ e.stopPropagation(); if(b.dataset.rs) window.__rsPick=b.dataset.rs; window.go(b.dataset.p); }));
 }
 
@@ -271,4 +295,9 @@ buildNav(); placeBack(); paintChip();
 /* 8MB の JS が届く前に、ホームだけ先に描いておく */
 document.querySelectorAll('main > .pane.on').forEach(x=>x.classList.remove('on'));
 secHome.classList.add('on'); renderHome(); cur='home';
+/* ホームは 8MB の JS より先に描いている。記事（articles.js）が後から届くので、
+   届いたら上の流れる帯を足すために一度だけ描き直す。 */
+(function(){ let n=0; const t=setInterval(()=>{
+  if(typeof ARTICLES!=='undefined'){ clearInterval(t); if(cur==='home') renderHome(); }
+  else if(++n>60) clearInterval(t); },250); })();
 })();
