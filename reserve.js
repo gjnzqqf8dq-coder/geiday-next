@@ -58,6 +58,7 @@ let cur=AMC[0].u, curT=AMC[0].t;
 
 function render(){
   const el=document.getElementById('p-rs');
+  if(window.__rsPick){ const id=window.__rsPick; window.__rsPick=null; const hit=id==='all'?ALLCAL:AMC.find(x=>x.u.endsWith('/'+id)); if(hit){ cur=hit.u; curT=hit.t; } }
   const item=(x,on)=>`<button class="rbtn${on?' on':''}" data-u="${esc(x.u)}" data-t="${esc(x.t)}">
       ${x.tag?`<span class="rtag">${esc(x.tag)}</span>`:''}${esc(x.t)}</button>`;
   el.innerHTML=`

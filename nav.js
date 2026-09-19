@@ -14,7 +14,7 @@ const NAME={find:'さがす',tt:'時間割',map:'校内地図',tea:'教員',art:
 const TABS=[{id:'home',l:'ホーム'},{id:'art',l:'つながる'},{id:'know',l:'知る'},{id:'news',l:'ニュース'}];
 const UNDER={home:'home',tt:'home',find:'home',map:'home',tea:'home',rs:'home',acc:'home',
   art:'art', ex:'know',kb:'know',gv:'know',ry:'know',sk:'know',jk:'know', ar:'news'};
-const KNOW=['ex','kb','gv','ry','sk'];   /* 「知る」のチップ */
+const KNOW=['ex','kb','gv','ry','sk','jk'];   /* 「知る」のチップ */
 const ENTRY={home:'home',art:'art',know:null,news:'ar'};
 const I={
   home:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 11.5 12 4l8.5 7.5"/><path d="M6 10v9.5h12V10"/><path d="M10 19.5v-5h4v5"/></svg>',
@@ -38,14 +38,14 @@ const I={
   gear:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>',
   chev:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>',
   back:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M14 6l-6 6 6 6"/></svg>',
+  ai:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3.5l1.6 4.2 4.2 1.6-4.2 1.6L12 15.1l-1.6-4.2-4.2-1.6 4.2-1.6z"/><path d="M18.5 14.5l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z"/><path d="M5 16l.6 1.4L7 18l-1.4.6L5 20l-.6-1.4L3 18l1.4-.6z"/></svg>',
   ext:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>',
   role_student:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-4.5L21 9l-9 4.5z"/><path d="M6.5 11v4.5c1.5 1.6 3.4 2.4 5.5 2.4s4-.8 5.5-2.4V11"/></svg>',
   role_juken:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4.5l2.2 4.6 5 .7-3.6 3.5.9 5-4.5-2.4-4.5 2.4.9-5L4.8 9.8l5-.7z"/></svg>',
   role_guest:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V9l8-5 8 5v11"/><path d="M4 20h16M10 20v-5h4v5"/></svg>'
 };
 const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-let role=null; try{ role=localStorage.getItem(KEY); }catch(e){}
-if(role && !ROLES[role]) role=null;
+let role='student';
 let cur='find', knowKind='ex';
 
 /* ---------- DOM ---------- */
@@ -55,32 +55,13 @@ const secHome=mk('section','p-home','pane'); main.appendChild(secHome);
 const secJk=mk('section','p-jk','pane'); main.appendChild(secJk);
 const back=mk('button','gback'); back.type='button'; main.insertBefore(back,main.firstChild);
 const lhead=mk('div','lhead');
-lhead.innerHTML='<button type="button" class="lchip" id="lchip"><span class="av"></span><b>Geiday</b></button>'+
-  '<div class="lclu"><button type="button" id="lfind" aria-label="さがす">'+I.find+'</button><button type="button" id="lrole" aria-label="所属を変える">'+I.gear+'</button></div>';
+lhead.innerHTML='<button type="button" class="lchip" id="lchip"><span class="av"></span><b>Geiday</b></button>';
 document.body.insertBefore(lhead,main);
 const edge=mk('div','gedge'); document.body.appendChild(edge);
 const nav=mk('nav','gnav'); nav.setAttribute('aria-label','主なページ');
 nav.innerHTML='<div class="gbar" id="gbar"><div id="glens"></div></div>'; document.body.appendChild(nav);
-const onb=mk('div','onb'); onb.setAttribute('role','dialog'); onb.setAttribute('aria-label','あなたは？');
-onb.innerHTML='<i class="b1"></i><i class="b2"></i><i class="b3"></i><div class="onbc"><div class="onbk">GEIDAY</div><h1 class="onbt">あなたは？</h1>'+
-  '<button class="onbo" data-r="student"><span class="ic">'+I.role_student+'</span><span><b>藝大生</b><small>時間割・地図・予約。ぜんぶ</small></span><span class="ar">'+I.chev+'</span></button>'+
-  '<button class="onbo" data-r="juken"><span class="ic">'+I.role_juken+'</span><span><b>受験生</b><small>先輩の受験記から</small></span><span class="ar">'+I.chev+'</span></button>'+
-  '<button class="onbo" data-r="guest"><span class="ic">'+I.role_guest+'</span><span><b>学外の人</b><small>展示・アーティスト・公募</small></span><span class="ar">'+I.chev+'</span></button>'+
-  '<div class="onbn">あとから右上の歯車で変えられます。</div></div>';
-document.body.appendChild(onb);
-if(role){ onb.classList.add('bye'); onb.style.display='none'; }
-onb.addEventListener('click',e=>{ const b=e.target.closest('.onbo'); if(!b) return; setRole(b.dataset.r,true); });
-
-function setRole(r,animate){
-  role=r; try{ localStorage.setItem(KEY,r); }catch(e){}
-  document.body.classList.remove('role-student','role-juken','role-guest'); document.body.classList.add('role-'+r);
-  if(typeof window.go==='function'){ try{ window.go('home'); }catch(e){} }
-  onb.classList.add('bye'); if(animate) setTimeout(()=>{ onb.style.display='none'; },480); else onb.style.display='none';
-}
-function askRole(){ onb.style.display='flex'; onb.offsetHeight; onb.classList.remove('bye'); }
+function askRole(){}
 window.geidayAskRole=askRole;
-document.getElementById('lrole').onclick=askRole;
-document.getElementById('lfind').onclick=()=>window.go('find');
 document.getElementById('lchip').onclick=()=>window.go('acc');
 
 /* ---------- 名前のチップ ---------- */
@@ -94,7 +75,7 @@ function paintChip(){
     b.textContent=name;
     av.innerHTML=(prof&&prof.face)?'<img src="'+esc(prof.face)+'" alt="">':'<span style="font-family:Karla,sans-serif;font-weight:700;font-size:14px;color:var(--ink)">'+esc(name.slice(0,1).toUpperCase())+'</span>';
   }else{
-    b.textContent=role==='student'?'ログイン':'Geiday';
+    b.textContent='ログイン';
     av.innerHTML=(typeof GEIDAY_MARK==='string')?GEIDAY_MARK:'';
   }
 }
@@ -118,7 +99,7 @@ function sync(p){
       if(ic && ic.animate) ic.animate([{transform:'scale(1)'},{transform:'scale(1.22)'},{transform:'scale(1)'}],{duration:420,easing:'cubic-bezier(.32,1.6,.45,1)'}); }
     b.classList.toggle('on',on); });
   lensTo(i);
-  const u=UNDER[p]; const sub=(u==='home'&&p!=='home')||p==='jk';
+  const u=UNDER[p]; const sub=(u==='home'&&p!=='home');
   back.classList.toggle('show',sub);
   if(sub){ const to=u==='home'?'home':knowKind; back.innerHTML=I.back+'<span>'+(u==='home'?'ホーム':'知る')+'</span>'; back.onclick=()=>window.go(to); placeBack(); }
   paintChip();
@@ -143,7 +124,8 @@ function wrapGo(){
   const w=function(p){ const prev=cur;
     if(p==='home') renderHome(); if(p==='jk') renderJuken(); if(KNOW.includes(p)) knowKind=p;
     orig(p);
-    if(KNOW.includes(p)) mountKnow(p); if(p==='ar') mountNews();
+    document.body.classList.remove('mapfull');
+    if(KNOW.includes(p)) mountKnow(p); if(p==='ar') mountNews(); if(p==='ry'||p==='sk') mountAI(p);
     sync(p); if(p!==prev) scrollTo({top:0}); };
   w.__line=true; window.go=w; return true;
 }
@@ -185,9 +167,10 @@ function homeCards(){
   };
   const rows=(title,items)=>'<div class="lcard wide lwide"><b>'+esc(title)+'</b><div class="lrows">'+items.map(([p,l,ic])=>
     '<button type="button" class="lr" data-p="'+p+'"><span class="ltile s">'+I[ic||p]+'</span><span>'+esc(l)+'</span><span class="chev">'+I.chev+'</span></button>').join('')+'</div></div>';
-  if(r==='juken') return '<div class="lrow">'+c.jk+c.map+c.tea+'</div>'+rows('見る',[['ex','展示・講評'],['kb','公募']])+featJk();
-  if(r==='guest') return '<div class="lrow">'+c.ex+c.map+c.tea+'</div>'+rows('見る',[['kb','公募'],['art','アーティスト']]);
-  return todayCard()+'<div class="lrow">'+c.tt+c.map+c.tea+'</div>'+rows('予約',[['rs','AMC','amc'],['rs','工房','kobo']])+featJk();
+  const RS=[['all','AMC 機材カレンダー（まとめて）','amc'],['lasercutter','レーザーカッター','kobo'],['3dprinter','3Dプリンター','kobo'],['printer','大判プリンター','kobo'],['recordingstudio','サウンドスタジオ','kobo'],['cnc','NC切削機','kobo']];
+  const rsRows='<div class="lcard wide lwide"><b>予約 <span class="ld">AMC</span></b><div class="lrows">'+RS.map(([id,l,ic])=>
+    '<button type="button" class="lr" data-p="rs" data-rs="'+id+'"><span class="ltile s">'+I[ic]+'</span><span>'+esc(l)+'</span><span class="chev">'+I.chev+'</span></button>').join('')+'</div></div>';
+  return todayCard()+'<div class="lrow">'+c.tt+c.map+c.tea+'</div>'+rsRows+featJk();
 }
 function featJk(){
   if(typeof JUKEN_POSTS==='undefined') return '';
@@ -197,7 +180,7 @@ function featJk(){
 }
 function renderHome(){
   secHome.innerHTML='<div class="lh">'+homeCards()+'</div>';
-  secHome.querySelectorAll('[data-p]').forEach(b=>b.addEventListener('click',e=>{ e.stopPropagation(); window.go(b.dataset.p); }));
+  secHome.querySelectorAll('[data-p]').forEach(b=>b.addEventListener('click',e=>{ e.stopPropagation(); if(b.dataset.rs) window.__rsPick=b.dataset.rs; window.go(b.dataset.p); }));
 }
 
 /* ---------- 知る：大見出し＋チップ（展示・講評／公募／譲り合い／留学／就活） ---------- */
@@ -212,6 +195,17 @@ function mountKnow(p){
     el.insertBefore(k,el.firstChild); }
   k.querySelectorAll('.lchips button').forEach(b=>b.classList.toggle('on',b.dataset.p===p));
   const w=el.querySelector('.bhead .btn.o'); if(w && !w.classList.contains('chipg')){ w.classList.add('chipg','write'); k.querySelector('.ltitle').insertBefore(w,k.querySelector('.lcirc')); }
+}
+/* ---------- 留学／就活：ChatGPTに相談（プロンプトを持って遷移） ---------- */
+const AIP={
+  ry:'私は東京藝術大学の学生です。留学を考えています。まず「学部・学年」「行きたい国や大学」「期間」「予算」の4つを1つずつ質問してから、藝大の交換留学（協定校・学内選考・3か月以上）と一般留学の違いを踏まえて、私に合う進め方と今月やることを提案してください。',
+  sk:'私は東京藝術大学の学生です。就活について相談したいです。まず「学部・学年」「興味のある業界や職種（例：広告・デザイン・ゲーム・大学院）」「ポートフォリオの有無」の3つを1つずつ質問してから、藝大生の事例を踏まえて、私に合う進め方と今月やることを提案してください。'};
+function mountAI(p){
+  const el=document.getElementById('p-'+p); if(!el || el.querySelector('.lai')) return;
+  const a=document.createElement('a'); a.className='lcard lai'; a.target='_blank'; a.rel='noopener noreferrer';
+  a.href='https://chatgpt.com/?q='+encodeURIComponent(AIP[p]);
+  a.innerHTML='<span class="ltile">'+I.ai+'</span><span><b>AIに相談する</b><small>ChatGPTが開き、質問が入った状態で始まります</small></span><span class="chev">'+I.chev+'</span>';
+  const k=el.querySelector('.lk.know'); if(k) k.insertAdjacentElement('afterend',a); else el.insertBefore(a,el.firstChild);
 }
 /* ---------- ニュース＝GEIDAYの記事 ---------- */
 function mountNews(){
@@ -257,7 +251,7 @@ function renderJuken(){
 }
 window.renderJuken=renderJuken; window.renderHome=renderHome;
 
-if(role){ document.body.classList.add('role-'+role); }
+document.body.classList.add('role-student');
 buildNav(); placeBack(); paintChip();
 /* 8MB の JS が届く前に、ホームだけ先に描いておく */
 document.querySelectorAll('main > .pane.on').forEach(x=>x.classList.remove('on'));
