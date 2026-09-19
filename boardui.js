@@ -125,13 +125,14 @@ const BOARDS={
        締切・応募資格・URLを確認したものを使う。 */
     dummy:()=> (typeof REAL_KOBO!=='undefined'?REAL_KOBO:[]),
     title:'公募・奨学金',
-    lead:'いま応募できる公募と奨学金。締切の近い順。',
-    filters:[{k:'kind',label:'種類',opts:['学内','学外','奨学金']},
-             {k:'when',label:'締切',opts:['まだ間に合う','過ぎた']}],
+    lead:'いま応募できる公募と奨学金。締切の近い順。過ぎたものは出しません。',
+    filters:[{k:'cat',label:'分野',opts:['グラフィック','イラスト・絵画','広告・コピー','写真','映像・メディア','プロダクト・家具','建築・空間','工芸・クラフト','音楽・舞台','奨学金・助成','その他']},
+             {k:'kind',label:'種類',opts:['学内','学外','奨学金']}],
     sort:(a,b)=> (a.due||'').localeCompare(b.due||''),
     fields:[
       {k:'title',t:'名称',type:'text',req:true,max:50},
       {k:'kind',t:'種類',type:'sel',opts:['学内','学外','奨学金'],req:true},
+      {k:'cat',t:'分野',type:'sel',opts:['グラフィック','イラスト・絵画','広告・コピー','写真','映像・メディア','プロダクト・家具','建築・空間','工芸・クラフト','音楽・舞台','奨学金・助成','その他']},
       {k:'org',t:'主催',type:'text',max:40},
       {k:'due',t:'締切',type:'date',req:true},
       {k:'target',t:'対象',type:'text',max:30,ph:'例）学部・大学院'},
@@ -145,16 +146,16 @@ const BOARDS={
       const amt = x.amountRaw ? x.amountRaw
                 : (x.amount ? Number(x.amount).toLocaleString()+'円' : '');
       return {tag:st, tagCls:left<0?'past':(left<=14?'live':'soon'),
-        head:x.title, sub:[x.kind,x.org].filter(Boolean).join(' ／ '),
+        head:x.title, sub:[x.cat,x.org].filter(Boolean).join(' ／ '),
         meta:`締切 ${x.dueRaw||x.due}${amt?' ／ '+amt:''}`,
         /* 一覧には応募資格を出さない。1件が高くなって、画面に2件しか入らなくなる。
            押して開けば「対象」として出る。 */
         body:x.body||'',
         url:x.url};
     },
-    match(x,f){ const left=Math.ceil((new Date(x.due)-new Date(TODAY))/86400000);
-      const st=left>=0?'まだ間に合う':'過ぎた';
-      return (!f.kind||f.kind===x.kind)&&(!f.when||f.when===st); },
+    /* 締切が過ぎたものは探しようがないので、最初から出さない */
+    match(x,f){ if((x.due||'')<TODAY) return false;
+      return (!f.kind||f.kind===x.kind)&&(!f.cat||f.cat===(x.cat||'その他')); },
     /* 免責の常時表示はしない。要項の確認は各件の「公式ページ」リンクが担う。 */
   },
 };
