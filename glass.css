@@ -194,7 +194,7 @@ body.mapfull #gedge,body.rsfull #gedge{display:none}
 
 /* ============ ブラッシュアップ（2026-09-19 夜） ============ */
 /* ページ切替に薄いフェード＋浮き上がり */
-@keyframes paneIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@keyframes paneIn{from{opacity:0}to{opacity:1}}
 .pane.on{animation:paneIn .28s var(--gl-ease) both}
 body.mapfull .pane.on{animation:none}
 /* 今日の授業 */
@@ -406,3 +406,13 @@ body.rsfull main,body.mapfull main{max-width:640px;margin:0 auto;padding:6px 14p
 .jksc dd strong{font-weight:700;font-size:14px}
 .jksc dd small{display:block;font-size:11.5px;color:var(--ln-gray);margin-top:2px;line-height:1.6}
 .jksc .chipg{margin-top:12px;height:34px;font-size:12.5px;padding:0 14px}
+
+/* ============ はみ出し止め ============ */
+html,body{max-width:100%;overflow-x:hidden}
+main{max-width:100%;overflow-x:clip}
+main li,main .trow,main .bitem,main .arrow2,main .lcard,main .lr{min-width:0}
+main li>*,main .trow>*,main .bitem>*,main .arrow2>*,main .lr>*{min-width:0}
+.trow .mt{overflow:hidden}
+/* ニュース：カテゴリーはセレクト1本（横スクロールのチップをやめた） */
+#p-ar .abar{display:flex;gap:8px;align-items:center;margin:0 0 14px}
+#p-ar .abar .acnt{margin-left:auto;font-size:12.5px;color:var(--ln-gray);font-weight:500}

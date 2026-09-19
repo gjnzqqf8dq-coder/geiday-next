@@ -142,21 +142,17 @@ function ttCount(){
   return Object.keys(tt).length;
 }
 function homeCards(){
-  const n=ttCount(), nt=(typeof TEACHERS!=='undefined'&&TEACHERS.length)?TEACHERS.length+'人':'';
+  const n=ttCount();
   const nk=(typeof REAL_KOBO!=='undefined'&&REAL_KOBO.length)?REAL_KOBO.length+'件':'';
-  const na=(typeof DUMMY_ARTISTS!=='undefined')?'':'';
   const C=[
     ['tt','時間割',   n?('今学期 '+n+'コマ'):'まだ空です'],
     ['map','校内地図','上野・取手・千住・横浜'],
-    ['tea','教員',    nt],
-    ['art','アーティスト','いま作っているもの'],
     ['ex','展示',     'いま見られる'],
     ['rs','予約',     'AMC・工房'],
     ['kb','公募',     nk],
     ['ry','留学',     '交換・一般'],
     ['sk','就活',     '進路のデータ'],
     ['jk','受験生',   '美大受験のこと'],
-    ['ar','ニュース', 'GEIDAYの記事'],
   ];
   const sq=([p,title,sub])=>'<button type="button" class="lcard sq" data-p="'+p+'"><span class="ltile">'+I[p]+'</span><b>'+esc(title)+'</b>'+(sub?'<small>'+esc(sub)+'</small>':'')+'</button>';
   return '<div class="lrow">'+C.map(sq).join('')+'</div>';

@@ -115,10 +115,13 @@ function render(){
   const list=ARTICLES.filter(a=>!arTag||a.tag===arTag);
   const href=a=>a.url?a.url:BASE+a.path;
   el.innerHTML=`
-    <div class="lchips" id="artags">
-      <button type="button" class="${arTag?'':'on'}" data-t="">すべて<small>${ARTICLES.length}</small></button>
-      ${tags.map(t=>`<button type="button" class="${arTag===t?'on':''}" data-t="${esc(t)}">${esc(t)}<small>${
-        ARTICLES.filter(a=>a.tag===t).length}</small></button>`).join('')}
+    <div class="abar">
+      <select class="fsel" id="artag">
+        <option value="">カテゴリー：すべて</option>
+        ${tags.map(t=>`<option value="${esc(t)}"${arTag===t?' selected':''}>${esc(t)}（${
+          ARTICLES.filter(a=>a.tag===t).length}）</option>`).join('')}
+      </select>
+      <span class="acnt">${list.length}本</span>
     </div>
     <div class="arlist">
       ${list.map(a=>`
@@ -135,7 +138,8 @@ function render(){
     </div>
     <p class="jknote">GEIDAY が書いている記事と、藝大生が note に書いた受験の記録です。押すと元の記事が開きます。
       <a href="${esc(QA)}" target="_blank" rel="noopener noreferrer">質問する</a></p>`;
-  el.querySelectorAll('#artags button').forEach(b=>b.onclick=()=>{ arTag=b.dataset.t; render(); scrollTo({top:0}); });
+  const sel=el.querySelector('#artag');
+  if(sel) sel.onchange=()=>{ arTag=sel.value; render(); scrollTo({top:0}); };
 }
 window.renderArticles=render;
 window.GEIDAY_SNS={...SNS, site:BASE};
