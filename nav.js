@@ -168,19 +168,42 @@ function marquee(){
   const list=ARTICLES.filter(a=>a.pic);
   if(list.length<3) return '';
   const href=a=>a.url?a.url:((window.ARTICLES_BASE||'')+a.path);
-  const one=a=>'<a class="mqi" href="'+esc(href(a))+'" target="_blank" rel="noopener noreferrer">'+
-    '<img src="'+esc(a.pic)+'" alt="" loading="lazy" decoding="async">'+
-    '<span>'+esc(a.title)+'</span></a>';
+  /* 文字は載せない。画像だけが流れているほうが強い */
+  const one=a=>'<a class="mqi" href="'+esc(href(a))+'" target="_blank" rel="noopener noreferrer" aria-label="'+esc(a.title)+'">'+
+    '<img src="'+esc(a.pic)+'" alt="" loading="lazy" decoding="async"></a>';
   const row=list.map(one).join('');
   return '<div class="mq" id="mq"><div class="mqt">'+row+row+'</div></div>';
 }
+/* カードの下に残った余白を、そのまま流れる帯の高さに足す。
+   下のバーに触れる手前で止める。画面の高さは端末でばらけるので測って決める。 */
+function fitMarquee(){
+  const img=secHome.querySelector('.mqi img'); if(!img) return;
+  const cards=secHome.querySelectorAll('.lcard.sq'); if(!cards.length) return;
+  const bar=document.getElementById('gnav'); if(!bar) return;
+  document.documentElement.style.removeProperty('--mqh-fit');
+  const last=cards[cards.length-1].getBoundingClientRect();
+  const gap=bar.getBoundingClientRect().top - last.bottom - 14;
+  if(gap<=8) return;
+  let h=Math.min(Math.round(img.offsetHeight+gap), Math.round(innerHeight*0.34));
+  const put=v=>{ document.documentElement.style.setProperty('--mqh-fit', v+'px');
+    document.documentElement.style.setProperty('--mqw-fit', Math.round(v*16/9)+'px'); };
+  put(h);
+  /* 伸ばした結果、画面より縦に長くなったらそのぶん戻す。
+     ホームはスクロールせずに収まっているのが気持ちいい */
+  requestAnimationFrame(()=>{
+    const over=document.documentElement.scrollHeight - innerHeight;
+    if(over>0) put(Math.max(120, h-over));
+  });
+}
+addEventListener('resize',()=>{ if(cur==='home') fitMarquee(); });
+
 function renderHome(){
   secHome.innerHTML=marquee()+'<div class="lh">'+homeCards()+'</div>';
   const t=secHome.querySelector('.mqt');
   if(t){
     /* 実寸を測ってから速さを決める。長さで速度が変わると気持ち悪い */
     requestAnimationFrame(()=>{ const w=t.scrollWidth/2;
-      if(w>0) t.style.animationDuration=Math.round(w/26)+'s'; });
+      if(w>0) t.style.animationDuration=Math.round(w/34)+'s'; fitMarquee(); });
     const mq=document.getElementById('mq');
     const hold=v=>()=>{ t.style.animationPlayState=v?'paused':'running'; };
     mq.addEventListener('pointerdown',hold(1)); mq.addEventListener('pointerup',hold(0));

@@ -427,22 +427,29 @@ main li>*,main .trow>*,main .bitem>*,main .arrow2>*,main .lr>*{min-width:0}
 #sdg{margin-bottom:14px}
 #sdg small{font-weight:500;opacity:.55;font-size:11.5px;margin-left:5px;font-variant-numeric:tabular-nums}
 
-/* ============ ホーム上部：流れる記事 ============ */
-.mq{position:relative;overflow:hidden;margin:0 -14px 14px;padding:2px 0;
-  -webkit-mask:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent);
-  mask:linear-gradient(90deg,transparent,#000 5%,#000 95%,transparent)}
+/* ============ ホーム上部：流れる記事（画像だけ） ============ */
+.mq{position:relative;overflow:hidden;margin:0 -14px 12px;
+  -webkit-mask:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent);
+  mask:linear-gradient(90deg,transparent,#000 4%,#000 96%,transparent)}
 .mqt{display:flex;gap:10px;width:max-content;animation:mq 40s linear infinite;will-change:transform}
 @keyframes mq{from{transform:translateX(0)}to{transform:translateX(-50%)}}
-.mqi{flex:none;width:168px;text-decoration:none;color:inherit;display:block;
-  transition:transform .35s var(--gl-spring)}
-.mqi:active{transform:scale(.96);transition:transform .07s}
-.mqi img{width:168px;height:94px;object-fit:cover;border-radius:12px;display:block;background:var(--ln-fill);
-  box-shadow:inset 0 0 0 .5px rgba(0,0,0,.08)}
-.mqi span{display:block;margin-top:6px;font-size:11.5px;font-weight:600;line-height:1.45;color:var(--ln-ink);
-  overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;width:168px}
+.mqi{flex:none;display:block;text-decoration:none;transition:transform .35s var(--gl-spring)}
+.mqi:active{transform:scale(.97);transition:transform .07s}
+.mqi img{width:var(--mqw-fit,var(--mqw,260px));height:var(--mqh-fit,var(--mqh,146px));object-fit:cover;border-radius:14px;display:block;
+  background:var(--ln-fill);box-shadow:inset 0 0 0 .5px rgba(0,0,0,.08)}
+/* 画面が高いほど大きく。カードが下のバーに触れる手前まで使い切る */
+@media(min-height:700px){ :root{--mqw:300px;--mqh:168px} }
+@media(min-height:820px){ :root{--mqw:330px;--mqh:186px} }
 @media(prefers-reduced-motion:reduce){
   .mqt{animation:none}
   .mq{overflow-x:auto;scrollbar-width:none;-webkit-mask:none;mask:none;padding-left:14px}
   .mq::-webkit-scrollbar{display:none}
 }
 @media(min-width:700px){ .mq{margin-left:0;margin-right:0} }
+/* カードは詰めて、流れる帯に高さを渡す */
+.lh .lrow{gap:9px}
+.lcard.sq{min-height:0;padding:12px 8px 11px}
+.lcard.sq .ltile{width:44px;height:44px;border-radius:13px}
+.lcard.sq .ltile svg{width:24px;height:24px}
+.lcard.sq>b{margin:8px 0 1px;font-size:13.5px}
+.lcard.sq small{font-size:11px;line-height:1.35}
