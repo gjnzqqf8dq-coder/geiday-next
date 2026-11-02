@@ -240,8 +240,9 @@ main .more{border-radius:999px;font-family:var(--ln-font);font-weight:700}
 /* ============ 2026-09-20 反映分 ============ */
 /* 右上の束は撤去。チップだけ */
 .lclu{display:none}
-/* つながる：横3列の正方形 */
-.agrid{grid-template-columns:repeat(3,1fr)!important;gap:8px!important}
+/* つながる：PCは横6列、スマホは3列の正方形 */
+.agrid{grid-template-columns:repeat(6,1fr)!important;gap:8px!important}
+@media(max-width:700px){ .agrid{grid-template-columns:repeat(3,1fr)!important} }
 .acard{border-radius:14px;background:#fff;box-shadow:inset 0 0 0 .5px rgba(0,0,0,.09);aspect-ratio:1/1.28}
 .acard .ainfo{height:auto;padding:7px 9px 8px}
 .acard .an,.an{font-size:13px}
